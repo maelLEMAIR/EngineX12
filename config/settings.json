@@ -1,0 +1,139 @@
+{
+    "projects": {
+        "53480858-225E-471E-6519-78630100412D": {
+            "config-debug": {
+              "additionalDependencies": [
+                "winmm.lib"
+              ],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "config-release": {
+              "additionalDependencies": [
+                "winmm.lib"
+              ],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "dependencies": [],
+          "dependents": [
+            "53595A46-7F47-1D1A-2E8E-45153DCA0801",
+            "53692C34-5C2F-7317-7803-11C67A944ED5"
+          ],
+            "name": "Core",
+            "property-lib": true,
+            "property-pch": false,
+            "property-vcpkg": false,
+            "property-window": false
+        },
+      "53595A46-7F47-1D1A-2E8E-45153DCA0801": {
+        "config-debug": {
+          "additionalDependencies": [],
+          "additionalIncludeDirectories": [],
+          "additionalLibraryDirectories": [],
+          "preprocessorDefinitions": []
+        },
+        "config-release": {
+          "additionalDependencies": [],
+          "additionalIncludeDirectories": [],
+          "additionalLibraryDirectories": [],
+          "preprocessorDefinitions": []
+        },
+        "dependencies": [
+          "53480858-225E-471E-6519-78630100412D",
+          "53692C34-5C2F-7317-7803-11C67A944ED5"
+        ],
+        "dependents": [
+          "53797E22-3918-4913-4178-5E78375E15A8",
+          "53A075F7-7E7A-310B-24F7-168949440C71"
+        ],
+        "name": "Engine",
+        "property-lib": true,
+        "property-pch": false,
+        "property-vcpkg": false,
+        "property-window": false
+      },
+      "53692C34-5C2F-7317-7803-11C67A944ED5": {
+        "config-debug": {
+          "additionalDependencies": [],
+          "additionalIncludeDirectories": [],
+          "additionalLibraryDirectories": [],
+          "preprocessorDefinitions": []
+        },
+        "config-release": {
+          "additionalDependencies": [],
+          "additionalIncludeDirectories": [],
+          "additionalLibraryDirectories": [],
+          "preprocessorDefinitions": []
+        },
+        "dependencies": [
+          "53480858-225E-471E-6519-78630100412D"
+        ],
+        "dependents": [],
+        "name": "Render",
+        "property-lib": true,
+        "property-pch": false,
+        "property-vcpkg": false,
+        "property-window": false
+      },
+        "53797E22-3918-4913-4178-5E78375E15A8": {
+            "config-debug": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "config-release": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+          "dependencies": [
+            "53595A46-7F47-1D1A-2E8E-45153DCA0801"
+          ],
+            "dependents": [],
+            "name": "Gameplay",
+            "property-lib": false,
+            "property-pch": false,
+            "property-vcpkg": false,
+            "property-window": true
+        },
+        "53A075F7-7E7A-310B-24F7-168949440C71": {
+            "config-debug": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "config-release": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+          "dependencies": [
+            "53595A46-7F47-1D1A-2E8E-45153DCA0801"
+          ],
+            "dependents": [],
+            "name": "Sample",
+            "property-lib": false,
+            "property-pch": false,
+            "property-vcpkg": false,
+            "property-window": true
+        }
+    },
+    "projects_name_to_guid": {
+        "Core": "53480858-225E-471E-6519-78630100412D",
+        "Engine": "53595A46-7F47-1D1A-2E8E-45153DCA0801",
+        "Gameplay": "53797E22-3918-4913-4178-5E78375E15A8",
+        "Render": "53692C34-5C2F-7317-7803-11C67A944ED5",
+        "Sample": "53A075F7-7E7A-310B-24F7-168949440C71"
+    },
+    "solution_guid": "52CF76DD-0C6F-3137-1252-40DA3F276843",
+    "solution_name": "EngineX12",
+    "startup_project": "",
+    "version": "2.0"
+}
