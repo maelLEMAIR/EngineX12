@@ -11,7 +11,7 @@ int WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
     /////////////////////////////////////////////////////////////////////////////
     /*Console::InitConsol();*/
     
-    TestScript::Run();
+    TestEngineManager::Run();
 
     /*Console::DeleteConsol();*/
     return 0;

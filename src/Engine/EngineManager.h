@@ -24,7 +24,7 @@ public:
 
     static EngineManager& GetInstance();
     
-    void Initialize(UINT _width, UINT _height, WString _title);
+    void Initialize(UINT _width, UINT _height, WString _title, bool _fullscreen = false);
     void Run();
     void Exit();
 	
