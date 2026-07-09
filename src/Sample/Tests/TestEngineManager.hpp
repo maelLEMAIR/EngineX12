@@ -44,17 +44,17 @@ class MainScene : public Scene
     void OnUpdate(float _dt) override
     {
         if (InputManager::IsKeyPressed(Q))
-            transformComp->local.Move( { -50.0f * _dt, 0.0f, 0.0f });
+            transformComp->local.Move( transformComp->local.right, -50.0f * _dt);
         if (InputManager::IsKeyPressed(D))
-            transformComp->local.Move( { 50.0f * _dt, 0.0f, 0.0f });
+            transformComp->local.Move( transformComp->local.right, 50.0f * _dt);
         if (InputManager::IsKeyPressed(Z))
-            transformComp->local.Move( { 0.0f, 0.0f, 50.0f * _dt });
+            transformComp->local.Move( transformComp->local.forward, 50.0f * _dt);
         if (InputManager::IsKeyPressed(S))
-            transformComp->local.Move( { 0.0f, 0.0f, -50.0f * _dt });
+            transformComp->local.Move( transformComp->local.forward, -50.0f * _dt);
         if (InputManager::IsKeyPressed(LEFT_ARROW))
-            transformComp->local.AddYPR({XM_PI / 256.0f, 0.0f, 0.0f});
+            transformComp->local.AddYPR({XM_PI / 32.0f, 0.0f, 0.0f});
         if (InputManager::IsKeyPressed(RIGHT_ARROW))
-            transformComp->local.AddYPR({XM_PI / -256.0f, 0.0f, 0.0f});
+            transformComp->local.AddYPR({XM_PI / -32.0f, 0.0f, 0.0f});
     }
 };
 

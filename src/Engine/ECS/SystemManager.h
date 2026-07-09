@@ -12,7 +12,6 @@ class EngineManager;
 class SystemManager
 {
 public:
-    SystemManager& Get();
     template<typename T>
     T* RegisterSystem(World& world, int priority = 0);
     template<typename T>
@@ -26,7 +25,6 @@ public:
 
 
 private:
-    static SystemManager* s_pInstance;
     
     void SortSystems();
 

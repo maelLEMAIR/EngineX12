@@ -1,19 +1,41 @@
-#include <iostream>
-#include <windows.h>
+#include "Core/define.h"
 #include "main.h"
 
-#ifdef _DEBUG
-int WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
+#include "Engine.h"
+#include <shellapi.h>
+
+#include "Core/Console.h"
+#pragma comment(lib, "shell32.lib")
+
+static std::string WStringToString(const std::wstring& wstr)
 {
-    
-    return 0;
-}
-#else
-int WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
-{
-    TestCollision::Run();
-	
-    return 0;
+    if (wstr.empty()) return {};
+    int size = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    std::string result(size - 1, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, result.data(), size, nullptr, nullptr);
+    return result;
 }
 
-#endif
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int)
+{
+    int argc;
+    LPWSTR* argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+    Console::InitConsol();
+    
+    std::vector<std::string> argStrings(argc);
+    std::vector<char*>       argv(argc);
+    for (int i = 0; i < argc; i++)
+    {
+        argStrings[i] = WStringToString(std::wstring(argvW[i]));
+        argv[i]       = argStrings[i].data();
+    }
+    LocalFree(argvW);
+
+    EngineManager::GetInstance().Initialize(1280, 720, L"EngineX12",
+                                            false, argc, argv.data());
+    EngineManager::GetInstance().Run();
+
+    Console::DeleteConsol();
+    return 0;
+}

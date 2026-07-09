@@ -17,6 +17,7 @@ using namespace std;
 using ComponentMask     = std::bitset<MAX_COMPONENTS>;
 using ComponentId       = uint32_t;
 using ColumnIndex       = uint32_t;
+using ObserverId        = uint32_t;
 using EntityId          = uint64_t;
 
 inline uint32_t GetEntityIndex  (EntityId id) { return (uint32_t)(id >> 32); }

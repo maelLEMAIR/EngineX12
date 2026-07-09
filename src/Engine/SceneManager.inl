@@ -11,7 +11,7 @@ SceneType* SceneManager::CreateSceneType(String const& _name, int32 _id)
 
 	uint32 id;
 	if (_id == -1)
-		id = s_pSceneManager->m_scenes.size();
+		id = (uint32)s_pSceneManager->m_scenes.size();
 	else
 		id = (uint32)_id;
 

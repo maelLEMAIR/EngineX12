@@ -4,8 +4,12 @@
 // Engine
 #include "define.h"
 
-// Render
+// Core
 #include "Core/Chrono.h"
+
+// Network
+#include "Network/NetworkManager.h"
+#include "NetworkBridge/Packet/PacketHandler.h"
 
 class Device;
 class Window;
@@ -24,8 +28,9 @@ public:
 
     static EngineManager& GetInstance();
     
-    void Initialize(UINT _width, UINT _height, WString _title, bool _fullscreen = false);
+    void Initialize(UINT _width, UINT _height, WString _title, bool _fullscreen, int argc = 0, char* argv[] = nullptr);
     void Run();
+    void TryRegisterNewClients(const NetworkPacket& packet, NetworkManager& net);
     void Exit();
 	
     static float GetDeltaTime() { return GetInstance().m_deltaTime; }
@@ -47,8 +52,10 @@ private:
     Window* m_pWindow = nullptr;
     Device* m_pDevice = nullptr;
     
-    SceneManager* m_pSceneManager;
-    RessourceManager* m_pRessourceManager;
+    SceneManager*       m_pSceneManager;
+    RessourceManager*   m_pRessourceManager;
+    NetworkManager*     m_pNetworkManager;
+    PacketHandler*      m_pPacketHandler;
 
     Client* m_pClient = nullptr;
     Server* m_pServer = nullptr;

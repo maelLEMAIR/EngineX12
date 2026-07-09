@@ -7,6 +7,7 @@ void LightSystem::OnRegister(World& world)
 {
     count = 0;
     lightDescriptors.clear();
+    System::OnRegister(world);
 }
 
 void LightSystem::Update(World& world, float _dt)

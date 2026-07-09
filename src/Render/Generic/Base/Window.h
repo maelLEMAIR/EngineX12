@@ -2,7 +2,7 @@
 #define WINDOW_H_DEFINED
 
 #include "../../Common/Common.h"
-#include <windows.h>
+#include "Core/define.h"
 
 class SwapChain;
 class Device;

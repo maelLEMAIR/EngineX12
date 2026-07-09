@@ -12,8 +12,8 @@ public:
     void Start();
     void Pause();
 
-    float GetTotalTime();
-    float GetElapsedTime();
+    float GetElapsedTime() const;
+    float GetTotalTime() const;
     float Reset();
 
 private:

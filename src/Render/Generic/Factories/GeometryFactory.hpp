@@ -747,7 +747,6 @@ public:
     	errno_t err = fopen_s(&file, _path.c_str(), "r");
     	if (err != 0 || file == nullptr)
     	{
-    		// std::cout << "Impossible to open the file: " << _path << '\n';
     		return nullptr;
     	}
 

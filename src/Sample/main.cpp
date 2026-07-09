@@ -1,27 +1,42 @@
-#include <iostream>
-#include <windows.h>
+#include "Core/define.h"
 #include "main.h"
 
-#include "Core/Console.h"
-#include "Tests.h"
+#include "Engine.h"
+#include <shellapi.h>
+#pragma comment(lib, "shell32.lib")
 
-#ifdef _DEBUG
-int WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
+#include "Core/Console.h"
+#include "Tests/TestEngineManager.hpp"
+#include "Tests/TestNetwork.hpp"
+
+static std::string WStringToString(const std::wstring& wstr)
 {
-    /////////////////////////////////////////////////////////////////////////////
-    /*Console::InitConsol();*/
-    
+    if (wstr.empty()) return {};
+    int size = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    std::string result(size - 1, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, result.data(), size, nullptr, nullptr);
+    return result;
+}
+
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+{
+    int argc;
+    LPWSTR* argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+    Console::InitConsol();
+    std::vector<std::string> argStrings(argc);
+    std::vector<char*>       argv(argc);
+    for (int i = 0; i < argc; i++)
+    {
+        argStrings[i] = WStringToString(std::wstring(argvW[i]));
+        argv[i]       = argStrings[i].data();
+    }
+    LocalFree(argvW);
+
+    //TestNetwork::Run(argc, argv.data());
     TestEngineManager::Run();
 
-    /*Console::DeleteConsol();*/
+    EngineManager::GetInstance().Run();
+    Console::DeleteConsol();
     return 0;
 }
-#else
-int WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
-{
-    TestCollision::Run();
-	
-    return 0;
-}
-
-#endif // !_DEBUG

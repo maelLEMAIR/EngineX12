@@ -7,14 +7,6 @@
 #include "EngineManager.h"
 #include "Generic/Base/Window.h"
 
-SystemManager* SystemManager::s_pInstance = nullptr;
-
-SystemManager& SystemManager::Get()
-{
-    if (s_pInstance == nullptr)
-        s_pInstance = new SystemManager();
-    return *s_pInstance;
-}
 
 void SystemManager::Update(World& world, float deltaTime)
 {
@@ -25,10 +17,9 @@ void SystemManager::Update(World& world, float deltaTime)
     }
 
     for (auto& entry : m_systems)
-    {
         if (entry.system->IsActive())
             entry.system->Update(world, deltaTime);
-    }
+        
 }
 
 void SystemManager::SortSystems()

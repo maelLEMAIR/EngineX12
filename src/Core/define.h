@@ -1,12 +1,9 @@
 #ifndef DEFINE_H_INCLUDED
 #define DEFINE_H_INCLUDED
 
-#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef _WINSOCKAPI_
-#define _WINSOCKAPI_
-#endif
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 
 #include <iostream>
@@ -15,12 +12,14 @@
 #include <string>
 #include <vector>
 #include <array>
-#include <unordered_map>
+#include <unordered_map> 
+#include <unordered_set> 
 #include <functional>
 
 #include <DirectXMath.h>
 #include <map>
 #include <queue>
+#include <mutex>
 
 using namespace DirectX;
 
@@ -34,8 +33,12 @@ using uint16     = uint16_t;
 using uint32     = uint32_t;
 using uint64     = uint64_t;
 
+using float32 = float;
+using float64 = double;
+
 using String  = std::string;
 using WString = std::wstring;
+using Mutex   = std::mutex;
 using Any     = std::any;
 using Byte    = std::byte;
 
@@ -48,11 +51,20 @@ using Array  = std::array<Type, Count>;
 template <typename Type>
 using Queue = std::queue<Type>;
 
+template <typename Type>
+using Hash = std::hash<Type>;
+
+template <typename Type>
+using LockGuard = std::lock_guard<Type>;
+
 template <typename... Type>
 using Tuple   = std::tuple<Type...>;
 
 template<typename Key, typename Value, typename Hash = std::hash<Key>, typename Equality = std::equal_to<Key>>
 using UnorderedMap = std::unordered_map<Key, Value, Hash, Equality>;
+
+template <typename Type>
+using UnorderedSet = std::unordered_set<Type>;
 
 template<typename Key, typename Value, typename Hash = std::hash<Key>, typename Equality = std::equal_to<Key>>
 using Map = std::map<Key, Value>;

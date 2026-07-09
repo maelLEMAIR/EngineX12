@@ -1,83 +1,114 @@
 {
     "projects": {
-        "53480858-225E-471E-6519-78630100412D": {
+        "22406CB3-4305-377F-6A77-7C4C72C546E1": {
             "config-debug": {
-              "additionalDependencies": [
-                "winmm.lib"
-              ],
+                "additionalDependencies": [],
                 "additionalIncludeDirectories": [],
                 "additionalLibraryDirectories": [],
                 "preprocessorDefinitions": []
             },
             "config-release": {
-              "additionalDependencies": [
-                "winmm.lib"
-              ],
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "dependencies": [
+              "53480858-225E-471E-6519-78630100412D",
+              "53595A46-7F47-1D1A-2E8E-45153DCA0801",
+              "55FB6CF8-4D14-60F8-5E4F-7A326E05728B"
+            ],
+            "dependents": [
+              "53A075F7-7E7A-310B-24F7-168949440C71",
+              "53797E22-3918-4913-4178-5E78375E15A8"
+            ],
+            "name": "NetworkBridge",
+            "property-lib": true,
+            "property-pch": false,
+            "property-vcpkg": false,
+            "property-window": false
+        },
+        "53480858-225E-471E-6519-78630100412D": {
+            "config-debug": {
+                "additionalDependencies": [
+                    "winmm.lib"
+                ],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "config-release": {
+                "additionalDependencies": [
+                    "winmm.lib"
+                ],
                 "additionalIncludeDirectories": [],
                 "additionalLibraryDirectories": [],
                 "preprocessorDefinitions": []
             },
             "dependencies": [],
-          "dependents": [
-            "53595A46-7F47-1D1A-2E8E-45153DCA0801",
-            "53692C34-5C2F-7317-7803-11C67A944ED5"
-          ],
+            "dependents": [
+                "53595A46-7F47-1D1A-2E8E-45153DCA0801",
+                "53692C34-5C2F-7317-7803-11C67A944ED5",
+                "55FB6CF8-4D14-60F8-5E4F-7A326E05728B",
+                "22406CB3-4305-377F-6A77-7C4C72C546E1"
+            ],
             "name": "Core",
             "property-lib": true,
             "property-pch": false,
             "property-vcpkg": false,
             "property-window": false
         },
-      "53595A46-7F47-1D1A-2E8E-45153DCA0801": {
-        "config-debug": {
-          "additionalDependencies": [],
-          "additionalIncludeDirectories": [],
-          "additionalLibraryDirectories": [],
-          "preprocessorDefinitions": []
+        "53595A46-7F47-1D1A-2E8E-45153DCA0801": {
+            "config-debug": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "config-release": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "dependencies": [
+                "53480858-225E-471E-6519-78630100412D",
+                "53692C34-5C2F-7317-7803-11C67A944ED5"
+            ],
+            "dependents": [
+                "53797E22-3918-4913-4178-5E78375E15A8",
+                "53A075F7-7E7A-310B-24F7-168949440C71",
+                "22406CB3-4305-377F-6A77-7C4C72C546E1"
+            ],
+            "name": "Engine",
+            "property-lib": true,
+            "property-pch": false,
+            "property-vcpkg": false,
+            "property-window": false
         },
-        "config-release": {
-          "additionalDependencies": [],
-          "additionalIncludeDirectories": [],
-          "additionalLibraryDirectories": [],
-          "preprocessorDefinitions": []
+        "53692C34-5C2F-7317-7803-11C67A944ED5": {
+            "config-debug": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "config-release": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "dependencies": [
+                "53480858-225E-471E-6519-78630100412D"
+            ],
+            "dependents": [],
+            "name": "Render",
+            "property-lib": true,
+            "property-pch": false,
+            "property-vcpkg": false,
+            "property-window": false
         },
-        "dependencies": [
-          "53480858-225E-471E-6519-78630100412D",
-          "53692C34-5C2F-7317-7803-11C67A944ED5"
-        ],
-        "dependents": [
-          "53797E22-3918-4913-4178-5E78375E15A8",
-          "53A075F7-7E7A-310B-24F7-168949440C71"
-        ],
-        "name": "Engine",
-        "property-lib": true,
-        "property-pch": false,
-        "property-vcpkg": false,
-        "property-window": false
-      },
-      "53692C34-5C2F-7317-7803-11C67A944ED5": {
-        "config-debug": {
-          "additionalDependencies": [],
-          "additionalIncludeDirectories": [],
-          "additionalLibraryDirectories": [],
-          "preprocessorDefinitions": []
-        },
-        "config-release": {
-          "additionalDependencies": [],
-          "additionalIncludeDirectories": [],
-          "additionalLibraryDirectories": [],
-          "preprocessorDefinitions": []
-        },
-        "dependencies": [
-          "53480858-225E-471E-6519-78630100412D"
-        ],
-        "dependents": [],
-        "name": "Render",
-        "property-lib": true,
-        "property-pch": false,
-        "property-vcpkg": false,
-        "property-window": false
-      },
         "53797E22-3918-4913-4178-5E78375E15A8": {
             "config-debug": {
                 "additionalDependencies": [],
@@ -91,9 +122,11 @@
                 "additionalLibraryDirectories": [],
                 "preprocessorDefinitions": []
             },
-          "dependencies": [
-            "53595A46-7F47-1D1A-2E8E-45153DCA0801"
-          ],
+            "dependencies": [
+              "53595A46-7F47-1D1A-2E8E-45153DCA0801",
+              "55FB6CF8-4D14-60F8-5E4F-7A326E05728B",
+              "22406CB3-4305-377F-6A77-7C4C72C546E1"
+            ],
             "dependents": [],
             "name": "Gameplay",
             "property-lib": false,
@@ -114,21 +147,52 @@
                 "additionalLibraryDirectories": [],
                 "preprocessorDefinitions": []
             },
-          "dependencies": [
-            "53595A46-7F47-1D1A-2E8E-45153DCA0801"
-          ],
+            "dependencies": [
+                "53595A46-7F47-1D1A-2E8E-45153DCA0801",
+                "55FB6CF8-4D14-60F8-5E4F-7A326E05728B",
+                "22406CB3-4305-377F-6A77-7C4C72C546E1"
+            ],
             "dependents": [],
             "name": "Sample",
             "property-lib": false,
             "property-pch": false,
             "property-vcpkg": false,
             "property-window": true
+        },
+        "55FB6CF8-4D14-60F8-5E4F-7A326E05728B": {
+            "config-debug": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "config-release": {
+                "additionalDependencies": [],
+                "additionalIncludeDirectories": [],
+                "additionalLibraryDirectories": [],
+                "preprocessorDefinitions": []
+            },
+            "dependencies": [
+                "53480858-225E-471E-6519-78630100412D"
+            ],
+            "dependents": [
+              "22406CB3-4305-377F-6A77-7C4C72C546E1",
+              "53A075F7-7E7A-310B-24F7-168949440C71",
+              "53797E22-3918-4913-4178-5E78375E15A8"
+            ],
+            "name": "Network",
+            "property-lib": true,
+            "property-pch": false,
+            "property-vcpkg": false,
+            "property-window": false
         }
     },
     "projects_name_to_guid": {
         "Core": "53480858-225E-471E-6519-78630100412D",
         "Engine": "53595A46-7F47-1D1A-2E8E-45153DCA0801",
         "Gameplay": "53797E22-3918-4913-4178-5E78375E15A8",
+        "Network": "55FB6CF8-4D14-60F8-5E4F-7A326E05728B",
+        "NetworkBridge": "22406CB3-4305-377F-6A77-7C4C72C546E1",
         "Render": "53692C34-5C2F-7317-7803-11C67A944ED5",
         "Sample": "53A075F7-7E7A-310B-24F7-168949440C71"
     },

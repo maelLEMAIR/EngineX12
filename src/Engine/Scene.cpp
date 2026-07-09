@@ -23,9 +23,16 @@ void Scene::Init(String const& _name, uint32 _id)
 void Scene::Update(float _dt)
 {
     OnUpdate(_dt);
-    EngineManager::GetInstance().GetWindow()->Clear();
+    
+    Window* window = EngineManager::GetInstance().GetWindow();
+    
+    if (window != nullptr)
+        window->Clear();
+    
     world.Update(_dt);
-    EngineManager::GetInstance().GetWindow()->Display();
+    
+    if (window != nullptr)
+        window->Display();
 }
 
 #endif

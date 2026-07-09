@@ -56,11 +56,11 @@ public:
     ArchetypeManager    m_archetypeManager;
     ComponentRegister   m_componentRegister;
     SystemManager       m_systemManager;
-    ScriptManager m_scriptManager;
+    ScriptManager       m_scriptManager;
+    EventDispatcher     m_eventDispatcher;
     
 private:
     bool          m_isQuerying = false;
-    EventDispatcher m_eventDispatcher;
 };
 
 #include "World.inl"

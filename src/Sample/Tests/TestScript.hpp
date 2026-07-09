@@ -10,8 +10,6 @@ class PlayerController : public Script
 public:
     void Start(World& world, EntityId self) override
     {
-        std::cout << "PlayerController Start sur e"
-                  << GetEntityIndex(self) << "\n";
         world.AddComponent<Velocity>(self) = { 1.0f, 0.0f };
     }
 
@@ -19,15 +17,10 @@ public:
     {
         Position* pos = world.GetComponent<Position>(self);
         Velocity* vel = world.GetComponent<Velocity>(self);
-        if (pos && vel)
-            std::cout << "Player e" << GetEntityIndex(self)
-                      << " pos(" << pos->x << ", " << pos->y << ")\n";
     }
 
     void OnDestroy(World& world, EntityId self) override
     {
-        std::cout << "PlayerController OnDestroy sur e"
-                  << GetEntityIndex(self) << "\n";
     }
 };
 
@@ -64,12 +57,9 @@ public:
         world.Update(0.016f);
 
         Health* hp = world.GetComponent<Health>(e1);
-        std::cout << "HP après 3 frames (2 regens) : " << hp->hp << " (attendu 52)\n";
         assert(hp->hp == 52);
         
         world.DestroyEntity(e1);
-
-        std::cout << "\n✅ Scripts OK\n";
     }
 };
 

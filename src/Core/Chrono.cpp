@@ -34,7 +34,7 @@ void Chrono::Pause()
     m_isPaused = true;
 }
 
-float Chrono::GetElapsedTime()
+float Chrono::GetElapsedTime() const
 {
     if (m_isPaused)
     {
@@ -47,18 +47,16 @@ float Chrono::GetElapsedTime()
     return (float)elapsedTime / 1000.0f;
 }
 
-float Chrono::GetTotalTime()
+float Chrono::GetTotalTime() const
 {
     DWORD currentTime = timeGetTime();
-    
+
     if (m_isPaused)
     {
-        // Total time is: (pause time - start time) - total paused time
         DWORD totalTime = m_pauseTime - m_startTime - m_totalPausedTime;
         return (float)totalTime / 1000.0f;
     }
-    
-    // Total time is: (current time - start time) - total paused time
+
     DWORD totalTime = currentTime - m_startTime - m_totalPausedTime;
     return (float)totalTime / 1000.0f;
 }

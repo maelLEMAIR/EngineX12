@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Windows.h>
+#include "Core/define.h"
 #include <DirectXMath.h>
 #include <cstdint>
 

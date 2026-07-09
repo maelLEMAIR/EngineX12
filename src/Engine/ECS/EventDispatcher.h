@@ -6,7 +6,6 @@
 
 class World;
 
-using ObserverId = uint32_t;
 constexpr ObserverId INVALID_OBSERVER = (std::numeric_limits<ObserverId>::max)();
 
 class EventDispatcher

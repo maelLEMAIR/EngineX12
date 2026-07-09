@@ -9,6 +9,8 @@
 #include "Systems/CameraSystem.h"
 #include "Systems/LightSystem.h"
 
+#include "NetworkBridge/NetworkSyncSystem.h"
+
 World::World()
 {
     m_entityManager = EntityManager();
