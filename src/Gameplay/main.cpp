@@ -5,6 +5,8 @@
 #include <shellapi.h>
 
 #include "Core/Console.h"
+#include "Gameplay/MainScene.h"
+
 #pragma comment(lib, "shell32.lib")
 
 static std::string WStringToString(const std::wstring& wstr)
@@ -32,9 +34,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int)
     }
     LocalFree(argvW);
 
-    EngineManager::GetInstance().Initialize(1280, 720, L"EngineX12",
-                                            false, argc, argv.data());
-    EngineManager::GetInstance().Run();
+    EngineManager engineManager;
+    engineManager.Initialize(1920, 1080, L"TestEngineManager", true);
+
+    SceneManager::CreateSceneType<MainScene>("MainScene");
+    SceneManager::SetCurrentScene("MainScene");
+
+    engineManager.Run();
 
     Console::DeleteConsol();
     return 0;
