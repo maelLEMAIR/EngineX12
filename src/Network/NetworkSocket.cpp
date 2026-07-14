@@ -10,15 +10,17 @@ bool NetworkSocket::Bind(uint16_t port)
 #ifdef _WIN32
     WSADATA wsa;
     int wsaResult = WSAStartup(MAKEWORD(2,2), &wsa);
+    std::cout << "[SOCKET] WSAStartup result: " << wsaResult << "\n";
 #endif
 
     m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    std::cout << "[SOCKET] Socket created : " << (m_socket != INVALID_SOCK ? "OK" : "FAIL") << "\n";
     if (m_socket == INVALID_SOCK) return false;
 
-    // Mode non bloquant — après création, avant bind
 #ifdef _WIN32
     u_long mode = 1;
     ioctlsocket(m_socket, FIONBIO, &mode);
+    std::cout << "[SOCKET] Non-blocking mode enabled " << "\n";
 #endif
 
     sockaddr_in addr{};
@@ -27,9 +29,10 @@ bool NetworkSocket::Bind(uint16_t port)
     addr.sin_addr.s_addr = INADDR_ANY;
 
     int result = bind(m_socket, (sockaddr*)&addr, sizeof(addr));
+    std::cout << "[SOCKET] Bind port " << port << ": " << (result == 0 ? "OK" : "FAIL") << "\n";
 
     if (result != 0)
-        std::cout << "[SOCKET] Erreur: " << WSAGetLastError() << "\n";
+        std::cout << "[SOCKET] Error : " << WSAGetLastError() << "\n";
 
     return result == 0;
 }
@@ -38,10 +41,15 @@ bool NetworkSocket::SendTo(const uint8_t* data, size_t size, const sockaddr_in& 
 {
     char ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &dest.sin_addr, ip, sizeof(ip));
-
+    
+    std::cout << "[SOCKET] SendTo " << ip << ":" << ntohs(dest.sin_port) << " size=" << size << "\n";
+    
     int result = sendto(m_socket,
         reinterpret_cast<const char*>(data), (int)size,
         0, (const sockaddr*)&dest, sizeof(dest));
+
+    std::cout << "[SOCKET] Sendto result=" << result << " err=" << WSAGetLastError() << "\n";
+    
     return result != -1;
 }
 
@@ -69,6 +77,9 @@ sockaddr_in NetworkSocket::MakeAddress(const std::string& ip, uint16_t port)
     addr.sin_family = AF_INET;
     addr.sin_port   = htons(port);
     int result = inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
+    
+    std::cout << "[SOCKET] MakeAddress " << ip << ":" << port << " inet_pton=" << result << "\n";
+    
     return addr;
 }
 

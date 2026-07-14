@@ -4,7 +4,7 @@
 void TransformSystem::Update(World& world, float deltaTime)
 {
     world.QueryWithEntity<TransformComponent>([&](EntityId id, TransformComponent& _transform)
-    {   
+    {
         UpdateMatrix(_transform, id);
     });
 }

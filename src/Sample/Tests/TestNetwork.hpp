@@ -4,7 +4,9 @@
 #include "Test.h"
 #include "Engine.h"
 #include "InputManager.h"
+#include "InterpolationSystem.h"
 #include "NetworkSyncSystem.h"
+#include "Components/TextComponent.h"
 #include "NetworkBridge/NetworkContext.h"
 #include "NetworkBridge/NetworkFlag.h"
 #include "NetworkBridge/NetworkIdentity.h"
@@ -20,7 +22,7 @@ class TestNetwork : public Test
 public: 
     static void Run(int argc, char* argv[])
     {
-        EngineManager::GetInstance().Initialize(1280, 720, L"TestNetwork", false, argc, argv);
+        EngineManager::GetInstance().Initialize(1280, 720, L"TestNetwork", true, argc, argv);
 
         SceneManager::CreateSceneType<TestNetworkScene>("TestNetwork");
         SceneManager::SetCurrentScene("TestNetwork");
@@ -46,42 +48,67 @@ public:
             UpdateServer(dt);*/
         if (NetworkContext::Get().IsClient())
         {
+            /*String text = std::to_string(PingManager::Get().GetLatency()) + " ms";
+            m_pText->SetString( text );*/
             SendInputs(dt);
         }
     }
 
 private:
-    EntityId m_entity = 0;
-    float    m_timer  = 0.f;
+    EntityId m_entity   = 0;
+    EntityId m_textPing = 0;
+
+    Text* m_pText       = nullptr;
+    float    m_timer    = 0.f;
 
     void InitServer()
     {
+        std::cout << "[SERVER] Start on port 7777\n";
+        
+        world.RegisterSystem<InterpolationSystem>(9);
         auto* syncSystem = world.RegisterSystem<NetworkSyncSystem>(10);
         syncSystem->SetNetworkManager(&NetworkContext::Get().GetManager());
-        
-        m_entity = world.CreateEntity();
-
-        world.AddComponent<TransformComponent>(m_entity);
-        world.AddComponent<NetworkIdentity>(m_entity);
-        world.AddComponent<DirtyFlag>(m_entity);
-
-        uint32_t netId = NetworkRegistry::Get().GenerateNetworkId();
-    
-        NetworkIdentity* identity = world.GetComponent<NetworkIdentity>(m_entity);
-        identity->networkId = netId;
-        identity->isOwner   = true;
-        
-        NetworkRegistry::Get().Register(netId, m_entity);
     }
 
     void InitClient()
     {
+        RessourceManager::AddCamera("Default");
+        
         Serialization::Serializer s;
         s.write((uint8)PacketType::Connect);
-
+        
         auto& net = NetworkContext::Get().GetManager();
+        
+        std::cout << "[CLIENT] Send Connect\n";
+        
         for (const auto& peer : net.GetPeers())
             net.SendTo(s.GetBuffer(), peer);
+        
+        /*m_entity = world.CreateEntity();
+        TransformComponent& transformEntity = world.AddComponent<TransformComponent>(m_entity);
+        transformEntity.local.SetPosition(XMFLOAT3(0.0f, 0.0f, 10.0f));
+        MeshRenderer& rendererEntity = world.AddComponent<MeshRenderer>(m_entity);
+        rendererEntity.geoId = RessourceManager::GetGeometryId("Cube");*/
+        
+        {
+            RenderFont* font = EngineManager::GetDevice()->CreateRenderFont(RES("/Font/GoldenVarsity.ttf"), 100.0f);
+
+            m_pText = EngineManager::GetDevice()->CreateText(font);
+            m_pText->SetString("0 ms");
+            RessourceManager::AddText("PingLabel", m_pText);
+
+            m_textPing = world.CreateEntity();
+            TextComponent& dayText = world.AddComponent<TextComponent>(m_textPing);
+            dayText.textId = RessourceManager::GetTextId("PingLabel");
+            dayText.transform.SetPosition(XMFLOAT2(-900.0f, -500.0f));
+        }
+
+        EntityId camera = world.CreateEntity();
+        TransformComponent& transformCamera = world.AddComponent<TransformComponent>(camera);
+        transformCamera.local.SetPosition(XMFLOAT3(0.0f, 0.0f, -10.0f));
+        CameraComponent& cam = world.AddComponent<CameraComponent>(camera);
+        cam.camId = RessourceManager::GetCameraId("Default");
+        cam.isMainCamera = true;
     }
 
     void SendInputs(float dt)
@@ -114,7 +141,9 @@ private:
 
         auto& net = NetworkContext::Get().GetManager();
         for (const auto& peer : net.GetPeers())
+        {
             net.SendTo(s.GetBuffer(), peer);
+        }
     }
     
     void UpdateServer(float dt)

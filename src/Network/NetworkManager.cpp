@@ -7,9 +7,14 @@
 
 bool NetworkManager::Start(uint16_t localPort, bool isServer)
 {
+    std::cout << "[NET] Start on port " << localPort << "\n";
     if (!m_socket.Bind(localPort))
+    {
+        std::cout << "[NET] Bind failed " << "\n";
         return false;
+    }
 
+    std::cout << "[NET] Thread network started " << "\n";
     m_running = true;
     m_thread  = std::thread(&NetworkManager::NetworkLoop, this);
     return true;
@@ -62,6 +67,7 @@ void NetworkManager::NetworkLoop()
         NetworkPacket toSend;
         while (m_outQueue.Pop(toSend))
         {
+            std::cout << "[NET] Send of " << toSend.data.size() << " bytes\n";
             m_socket.SendTo(toSend.data.data(), toSend.data.size(), toSend.address);
         }
 
@@ -69,6 +75,7 @@ void NetworkManager::NetworkLoop()
         int received = m_socket.RecvFrom(buffer, BUFFER_SIZE, from);
         if (received > 0)
         {
+            std::cout << "[NET] Receive " << received << " bytes\n";
             NetworkPacket packet;
             packet.data    = Vector<UINT8>(buffer, buffer + received);
             packet.address = from;

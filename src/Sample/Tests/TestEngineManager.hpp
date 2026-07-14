@@ -12,11 +12,11 @@ class MainScene : public Scene
     {
 
         RessourceManager::AddCamera("Default");
-        RessourceManager::AddGeometry("Cube", GeometryFactory::LoadGeometry(EngineManager::GetDevice(), "../../res/Obj/xwing.obj"));
+        RessourceManager::AddGeometry("XWING", GeometryFactory::LoadGeometry(EngineManager::GetDevice(), "../../../../res/Obj/xwing.obj"));
         
         EntityId e1 = world.CreateEntity();
         MeshRenderer& renderer = world.AddComponent<MeshRenderer>(e1);
-        renderer.geoId = RessourceManager::GetGeometryId("Cube");
+        renderer.geoId = RessourceManager::GetGeometryId("XWING");
         renderer.materialId = RessourceManager::GetMaterialId("Default");
         transformComp = &world.AddComponent<TransformComponent>(e1);
         transformComp->world.pos = { 0.0f, 0.0f, 5.0f};

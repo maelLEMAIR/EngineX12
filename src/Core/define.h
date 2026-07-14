@@ -16,6 +16,7 @@
 #include <unordered_set> 
 #include <functional>
 
+#include <algorithm>
 #include <DirectXMath.h>
 #include <map>
 #include <queue>

@@ -21,8 +21,10 @@
 #include "NetworkBridge/NetworkContext.h"
 #include "NetworkBridge/NetworkFlag.h"
 #include "NetworkBridge/NetworkIdentity.h"
+#include "NetworkBridge/NetworkInterpolator.h"
 #include "NetworkBridge/NetworkLaunchArgs.h"
 #include "NetworkBridge/NetworkRegistry.h"
+#include "NetworkBridge/PingManager.h"
 #include "NetworkBridge/PlayerRegistry.h"
 #include "NetworkBridge/Packet/PacketBuilder.h"
 #include "NetworkBridge/Packet/PacketDef.h"
@@ -60,16 +62,17 @@ void EngineManager::Initialize(UINT _width, UINT _height, WString _title, bool _
     NetworkContext::Get().Initialize(netArgs);
     NetworkBridge::RegisterComponents();
 
+    m_pPacketHandler = new PacketHandler();
+    m_pPacketHandler->SetNetworkManager(&NetworkContext::Get().GetManager());
+
+    if (m_pSceneManager == nullptr)
+        m_pSceneManager = new SceneManager;
+    
     if (NetworkContext::Get().IsServer())
     {
         AllocConsole();
         FILE* f;
         freopen_s(&f, "CONOUT$", "w", stdout);
-
-        m_pPacketHandler = new PacketHandler();
-
-        if (m_pSceneManager == nullptr)
-            m_pSceneManager = new SceneManager;
 
         return;
     }
@@ -86,6 +89,8 @@ void EngineManager::Initialize(UINT _width, UINT _height, WString _title, bool _
     m_pDevice->SetClearColor(ToColor(87, 185, 255));
     m_pRessourceManager = new RessourceManager;
 
+    RessourceManager::AddGeometry("Cube", GeometryFactory::BuildCube(m_pDevice));
+    
     Shader* coloredS = ShaderFactory::CreateLitColored(m_pDevice);
     RessourceManager::AddShader("Color", coloredS);
 
@@ -94,21 +99,22 @@ void EngineManager::Initialize(UINT _width, UINT _height, WString _title, bool _
     RessourceManager::AddMaterial("Default", white);
 
     InputManager::Initialize(m_pWindow->GetHWND());
-    m_pPacketHandler = new PacketHandler();
-    if (m_pSceneManager == nullptr)
-        m_pSceneManager = new SceneManager;
 }
 
 void EngineManager::Run()
 {
     m_chrono.Start();
-
+    
     if (NetworkContext::Get().IsServer())
     {
+        constexpr float TICK_RATE    = 60.f;
+        constexpr float TICK_DELAY   = 1.f / TICK_RATE;
+        float           accumulator  = 0.f;
+
         while (true)
         {
-            m_deltaTime = m_chrono.Reset();
-            m_pPacketHandler->SetDeltaTime(m_deltaTime);
+            float frameTime = m_chrono.Reset();
+            accumulator += frameTime;
 
             NetworkPacket packet;
             while (NetworkContext::Get().GetManager().PopReceived(packet))
@@ -117,22 +123,12 @@ void EngineManager::Run()
                 m_pPacketHandler->Handle(packet, m_pSceneManager->GetCurrentScene()->world);
             }
 
-            static float timeoutTimer = 0.f;
-            timeoutTimer += m_deltaTime;
-            if (timeoutTimer >= 1.f)
+            while (accumulator >= TICK_DELAY)
             {
-                timeoutTimer = 0.f;
-                auto timedOut = PlayerRegistry::Get().GetTimedOut(5.f);
-                for (const auto& addr : timedOut)
-                {
-                    std::cout << "[SERVER] Client timeout\n";
-                    NetworkPacket fakePacket;
-                    fakePacket.address = addr;
-                    fakePacket.data    = { (uint8_t)PacketType::Disconnect };
-                    m_pPacketHandler->Handle(fakePacket, m_pSceneManager->GetCurrentScene()->world);
-                }
+                m_pPacketHandler->SetDeltaTime(TICK_DELAY);
+                m_pSceneManager->GetCurrentScene()->Update(TICK_DELAY);
+                accumulator -= TICK_DELAY;
             }
-            m_pSceneManager->GetCurrentScene()->Update(m_deltaTime);
         }
     }
     
@@ -140,10 +136,15 @@ void EngineManager::Run()
     {
         m_deltaTime = m_chrono.Reset();
 
+        m_pPacketHandler->SetCurrentTime(m_totalTime);
+        m_totalTime += m_deltaTime;
+        
         m_pWindow->Update();
         
         InputManager::Update(m_deltaTime);
-
+        
+        PingManager::Get().Update(m_deltaTime, NetworkContext::Get().GetManager());
+        
         if (NetworkContext::Get().GetRole() != NetworkRole::None)
         {
             NetworkPacket packet;
@@ -151,9 +152,6 @@ void EngineManager::Run()
 
             while (netManager.PopReceived(packet))
                 m_pPacketHandler->Handle(packet, m_pSceneManager->GetCurrentScene()->world);
-
-            if (NetworkContext::Get().IsServer())
-                TryRegisterNewClients(packet, netManager);
         }
         m_pSceneManager->GetCurrentScene()->Update(m_deltaTime);
     }
@@ -192,7 +190,9 @@ void EngineManager::TryRegisterNewClients(const NetworkPacket& packet, NetworkMa
 
     NetworkRegistry::Get().Register(netId, localId);
     PlayerRegistry::Get().Register(packet.address, localId);
-
+    
+    std::cout << "[SERVER] New client register " << "\n";
+    
     Serialization::Serializer s;
     s.write((uint8)PacketType::EntityCreated);
     s.write(netId);
@@ -201,6 +201,8 @@ void EngineManager::TryRegisterNewClients(const NetworkPacket& packet, NetworkMa
     
     auto snapshot = PacketBuilder::Snapshot(world);
     net.SendTo(snapshot, packet.address);
+
+    std::cout << "[SERVER] Snapshot send to new client\n";
 }
 
 #endif

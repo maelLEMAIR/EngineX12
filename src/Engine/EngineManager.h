@@ -45,7 +45,10 @@ private:
     static EngineManager* s_pInstance;
 
     Chrono m_chrono;
+    Chrono m_networkChrono;
+    
     float m_deltaTime = 0.0f;
+    float m_totalTime = 0.0f;
     
     Camera* m_camera = nullptr;
     

@@ -13,7 +13,8 @@ void CameraSystem::Update(World& world, float _dt)
         if (cam == nullptr) return;
     
         Device* d = EngineManager::GetInstance().GetDevice();
-    
+
+        
         cam->SetWorld(_transform.world.GetMatrix());
         if (_camera.isMainCamera)
         {

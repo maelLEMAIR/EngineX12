@@ -28,7 +28,7 @@ struct NetworkLaunchArgs
             else if (arg == "--client")
             {
                 args.role      = NetworkRole::Client;
-                args.localPort = 7778; // port local différent du serveur
+                args.localPort = 7778;
             }
             else if (arg == "--ip" && i + 1 < argc)
             {

@@ -70,6 +70,16 @@ public:
 
         return timedOut;
     }
+
+    void Touch(const sockaddr_in& addr)
+    {
+        auto it = m_map.find(addr);
+
+        if (it == m_map.end())
+            return;
+
+        it->second.lastSeen.Reset();
+    }
     
     void     Unregister(const sockaddr_in& addr)              { m_map.erase(addr); }
     bool     Has       (const sockaddr_in& addr) const        { return m_map.contains(addr); }

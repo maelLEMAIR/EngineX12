@@ -21,7 +21,7 @@ public:
         m_args = args;
 
         if (m_role == NetworkRole::None) return true;
-
+        
         if (!m_networkManager.Start(args.localPort, args.role == NetworkRole::Server))
             return false;
 

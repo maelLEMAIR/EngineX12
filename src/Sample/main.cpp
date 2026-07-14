@@ -33,8 +33,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     }
     LocalFree(argvW);
 
-    //TestNetwork::Run(argc, argv.data());
-    TestEngineManager::Run();
+    TestNetwork::Run(argc, argv.data());
+    //TestEngineManager::Run();
 
     EngineManager::GetInstance().Run();
     Console::DeleteConsol();

@@ -27,6 +27,8 @@ void NetworkSyncSystem::SendDirtyComponents(World& world, EntityId id,
 {
     if (dirty.IsDirty(0))
     {
+        std::cout << "[SERVER] Send transform networkId=" << networkId << "\n";
+        
         TransformComponent* t = world.GetComponent<TransformComponent>(id);
         if (t)
         {
