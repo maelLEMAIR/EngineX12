@@ -98,6 +98,10 @@ void EngineManager::Initialize(UINT _width, UINT _height, WString _title, bool _
     white->SetFloat4("DiffuseAlbedo", {1.0f, 1.0f, 1.0f, 1.0f});
     RessourceManager::AddMaterial("Default", white);
 
+	Material* red = coloredS->CreateMaterial();
+	red->SetFloat4("DiffuseAlbedo", { 1.0f, 0.0f, 0.0f, 1.0f });
+	RessourceManager::AddMaterial("Red", red);
+
     RessourceManager::AddCamera("Default");
 
     InputManager::Initialize(m_pWindow->GetHWND());
