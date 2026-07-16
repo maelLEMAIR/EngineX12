@@ -10,6 +10,5 @@ public:
 
 private:
 	float m_yaw = 0.0f;
-	XMINT2 m_lastMousePos = { 0, 0 };
 };
 

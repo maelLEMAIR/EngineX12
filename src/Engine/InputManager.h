@@ -90,6 +90,8 @@ public:
     static const String GetTypedChar();
     static void ClearTypedChars();
 
+    static XMINT2 GetMouseDelta();
+
 private:
     
     static UnorderedMap<UINT8, INT32> s_keyboardMap;
@@ -106,6 +108,7 @@ private:
 
     static String s_typedChars;
 
+    inline static XMINT2 s_mouseDelta = { 0, 0 };
 };
 
 #endif

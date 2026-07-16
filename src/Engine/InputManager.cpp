@@ -163,6 +163,21 @@ void InputManager::Update(float _dt)
 {
     HandleInput();
 
+    if (s_cursorLocked)
+    {
+        XMINT2 center = {
+            EngineManager::GetWindow()->GetWidth() / 2,
+            EngineManager::GetWindow()->GetHeight() / 2
+        };
+        XMINT2 currentPos = GetMousePosition();
+        s_mouseDelta = { currentPos.x - center.x, currentPos.y - center.y };
+        SetMousePosition(center);
+    }
+    else
+    {
+        s_mouseDelta = { 0, 0 };
+    }
+
     if (IsKeyDown(BACKSPACE))
         if (s_typedChars.empty() == false)
             s_typedChars.pop_back();
@@ -325,6 +340,11 @@ const String InputManager::GetTypedChar()
 void InputManager::ClearTypedChars()
 {
     s_typedChars.clear();
+}
+
+XMINT2 InputManager::GetMouseDelta()
+{
+    return s_mouseDelta;
 }
 
 #endif

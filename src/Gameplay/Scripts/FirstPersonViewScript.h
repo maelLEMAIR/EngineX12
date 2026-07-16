@@ -11,7 +11,6 @@ class FirstPersonViewScript : public Script
 private:
 	float m_pitch;
 	bool m_cursorLocked;
-	XMINT2 m_lastMousePos = { 0, 0 };
 };
 
 #endif // FIRST_PERSON_VIEW_SCRIPT_H

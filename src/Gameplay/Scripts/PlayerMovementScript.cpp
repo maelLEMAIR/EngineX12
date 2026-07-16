@@ -7,15 +7,14 @@ void PlayerMovementScript::Update(World& world, EntityId self, float deltaTime)
 	if (world.GetComponent<CharacterController>(self) == nullptr || world.GetComponent<TransformComponent>(self) == nullptr)
 		return;
 
-	float mouseSensitivity = world.GetComponent<CharacterController>(self)->mouseSensitivity;
-	XMINT2 mousePos = InputManager::GetMousePosition();
-	float deltaX = static_cast<float>(mousePos.x - m_lastMousePos.x);
-	m_lastMousePos = mousePos;
+	if (InputManager::IsMouseCursorLocked())
+	{
+		float mouseSensitivity = world.GetComponent<CharacterController>(self)->mouseSensitivity;
+		XMINT2 delta = InputManager::GetMouseDelta();
 
-	m_yaw += deltaX * mouseSensitivity;
-	if (InputManager::IsMouseCursorLocked() == true)
+		m_yaw += static_cast<float>(delta.x) * mouseSensitivity;
 		world.GetComponent<TransformComponent>(self)->local.SetYPR(XMFLOAT3(m_yaw, 0.0f, 0.0f));
-
+	}
 }
 
 void PlayerMovementScript::Move(World& world, EntityId self, float deltaTime, const XMFLOAT3& direction, float speed)
