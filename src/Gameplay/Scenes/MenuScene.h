@@ -1,7 +1,7 @@
 #pragma once
 #include "../Engine/Engine.h"
 
-class MainScene : public Scene
+class MenuScene : public Scene
 {
 
 public:

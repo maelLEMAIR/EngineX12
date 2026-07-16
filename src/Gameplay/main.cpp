@@ -6,6 +6,8 @@
 
 #include "Core/Console.h"
 #include "Gameplay/MainScene.h"
+#include "Gameplay/Scenes/MenuScene.h"
+
 
 #pragma comment(lib, "shell32.lib")
 
@@ -38,7 +40,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int)
     engineManager.Initialize(1920, 1080, L"TestEngineManager", true);
 
     SceneManager::CreateSceneType<MainScene>("MainScene");
-    SceneManager::SetCurrentScene("MainScene");
+	SceneManager::CreateSceneType<MenuScene>("MenuScene");
+    SceneManager::SetCurrentScene("MenuScene");
 
     engineManager.Run();
 
