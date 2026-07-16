@@ -34,46 +34,6 @@ Transform2D::Transform2D()
     SetIdentity();
 }
 
-Transform2D::Transform2D(const Transform2D& other)
-    : pos(other.pos),
-      scale(other.scale),
-      angle(other.angle),
-      matrix(other.matrix),
-      dirty(other.dirty)
-{
-}
-
-Transform2D::Transform2D(Transform2D&& other) noexcept
-    : pos(std::move(other.pos)),
-      scale(std::move(other.scale)),
-      angle(other.angle),
-      matrix(std::move(other.matrix)),
-      dirty(other.dirty)
-{
-}
-
-Transform2D& Transform2D::operator=(const Transform2D& other)
-{
-    if (this == &other) return *this;
-    pos      = other.pos;
-    scale    = other.scale;
-    angle    = other.angle;
-    matrix   = other.matrix;
-    dirty    = other.dirty;
-    return *this;
-}
-
-Transform2D& Transform2D::operator=(Transform2D&& other) noexcept
-{
-    if (this == &other) return *this;
-    pos      = std::move(other.pos);
-    scale    = std::move(other.scale);
-    angle    = other.angle;
-    matrix   = std::move(other.matrix);
-    dirty    = other.dirty;
-    return *this;
-}
-
 // ---------------------------------------------------------------------------
 // Matrix
 // ---------------------------------------------------------------------------

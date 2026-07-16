@@ -5,8 +5,7 @@
 
 struct NetworkIdentity
 {
-    uint32 networkId  = 0;
-    bool     isOwner    = false;
+    UINT32 networkId  = 0;
 };
 
 #endif

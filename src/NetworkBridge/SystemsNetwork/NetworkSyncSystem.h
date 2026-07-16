@@ -3,10 +3,10 @@
 
 #include "Engine/ECS/System.h"
 #include "Network/NetworkManager.h"
-#include "Packet/PacketBuilder.h"
-#include "NetworkComponentIndex.h"
-#include "NetworkFlag.h"
-#include "NetworkIdentity.h"
+#include "../Packet/PacketBuilder.h"
+#include "../NetworkComponentIndex.h"
+#include "../NetworkFlag.h"
+#include "../NetworkIdentity.h"
 
 class World;
 

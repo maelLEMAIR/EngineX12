@@ -34,6 +34,7 @@ public:
     void Exit();
 	
     static float GetDeltaTime() { return GetInstance().m_deltaTime; }
+    float GetTotalTime() const { return m_totalTime; }
     static Window* GetWindow() { return GetInstance().m_pWindow; }
     static Device* GetDevice() { return GetInstance().m_pDevice; }
 

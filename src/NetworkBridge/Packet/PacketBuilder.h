@@ -6,6 +6,7 @@
 #include "Engine/ECS/World.h"
 #include "Components/TransformComponent.hpp"
 #include "../NetworkComponent/INetworkComponent.h"
+#include "Components/MeshRenderer.hpp"
 #include "Network/Serialization/Serialization.h"
 
 class PacketBuilder
@@ -47,16 +48,14 @@ public:
     {
         Serialization::Serializer s;
         s.write((uint8)PacketType::Snapshot);
-
+        
         uint32_t count = 0;
         world.Query<NetworkIdentity>([&](NetworkIdentity&) { count++; });
         s.write(count);
-
-        world.QueryWithEntity<NetworkIdentity, TransformComponent>(
-            [&](EntityId id, NetworkIdentity& identity, TransformComponent& t)
+        world.Query<NetworkIdentity, TransformComponent>(
+            [&](NetworkIdentity& identity, TransformComponent& t)
             {
                 s.write(identity.networkId);
-                s.write(identity.isOwner);
 
                 s.write(t.local.matrix);
             }

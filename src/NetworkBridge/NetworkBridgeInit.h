@@ -1,14 +1,13 @@
 ﻿#ifndef NETWORK_BRIDGE_INIT_H_INCLUDED
 #define NETWORK_BRIDGE_INIT_H_INCLUDED
 
-#include "ComponentDispatcher.h"
 #include "NetworkComponentIndex.h"
 #include "Engine/Components/TransformComponent.hpp"
 #include "Network/Serialization/Deserialization.h"
 
 namespace NetworkBridge
 {
-    inline void RegisterComponents()
+    /*inline void RegisterComponents()
     {
         NetworkComponentIndex::Get().Register(0x01);
         ComponentDispatcher::Get().Register(0x01,
@@ -34,7 +33,7 @@ namespace NetworkBridge
                 t->local.UpdateMatrix();
             }
         );
-    }
+    }*/
 }
 
 #endif

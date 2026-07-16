@@ -8,8 +8,10 @@
 #include "Systems/TransformSystem.h"
 #include "Systems/CameraSystem.h"
 #include "Systems/LightSystem.h"
+#include "Systems/TextSystem.h"
 
-#include "NetworkBridge/NetworkSyncSystem.h"
+#include "NetworkBridge/SystemsNetwork/NetworkSyncSystem.h"
+#include "NetworkBridge/SystemsNetwork/InterpolationSystem.h"
 
 World::World()
 {
@@ -22,6 +24,8 @@ World::World()
     m_systemManager.RegisterSystem<MeshRendererSystem>( *this, 1);
     m_systemManager.RegisterSystem<CameraSystem>(       *this, 2);
     m_systemManager.RegisterSystem<LightSystem>(        *this, 3);
+    m_systemManager.RegisterSystem<TextSystem>(        *this, 4);
+    m_systemManager.RegisterSystem<InterpolationSystem>(*this, 9);
 }
 
 World::~World() 
@@ -37,12 +41,15 @@ void World::Update(float deltaTime)
 EntityId World::CreateEntity()
 {
     EntityId id = m_entityManager.CreateEntity();
+    
     EntityRecord* record = m_entityManager.GetEntity(id);
 
     record->archetype = m_archetypeManager.archetypeSystem.GetEmptyArchetype();
     record->rowId     = 0;
 
     m_eventDispatcher.DispatchEntityCreated(*this, id);
+    
+    AddComponent<TransformComponent>(id);
     return id;
 }
 

@@ -10,25 +10,32 @@ class MainScene : public Scene
     TransformComponent* transformComp = nullptr;
     void OnInit() override
     {
-
-        RessourceManager::AddCamera("Default");
         RessourceManager::AddGeometry("XWING", GeometryFactory::LoadGeometry(EngineManager::GetDevice(), "../../../../res/Obj/xwing.obj"));
         
         EntityId e1 = world.CreateEntity();
         MeshRenderer& renderer = world.AddComponent<MeshRenderer>(e1);
         renderer.geoId = RessourceManager::GetGeometryId("XWING");
         renderer.materialId = RessourceManager::GetMaterialId("Default");
-        transformComp = &world.AddComponent<TransformComponent>(e1);
+        transformComp = world.GetComponent<TransformComponent>(e1);
         transformComp->world.pos = { 0.0f, 0.0f, 5.0f};
 
         EntityId camera = world.CreateEntity();
         TransformComponent& t = world.AddComponent<TransformComponent>(camera);
-        t.local.SetPosition(XMFLOAT3(0.0f, 5.0f, -10.0f));
+        t.local.SetPosition(XMFLOAT3(0.0f, 5.0f, -5.0f));
         t.local.AddYPR({0.0f, XM_PI / 8, 0.0f});
+        t.SetParent(e1);
         CameraComponent& cam = world.AddComponent<CameraComponent>(camera);
         cam.camId = RessourceManager::GetCameraId("Default");
         cam.isMainCamera = true;
-
+        
+        EntityId e2 = world.CreateEntity();
+        MeshRenderer& rendererE2 = world.AddComponent<MeshRenderer>(e2);
+        rendererE2.geoId = RessourceManager::GetGeometryId("Cube");
+        rendererE2.materialId = RessourceManager::GetMaterialId("Red");
+        TransformComponent* transformE2 = world.GetComponent<TransformComponent>(e2);
+        transformE2->local.pos = { 0.0f, -5.0f, .0f};
+        transformE2->local.scale = { 10.0f, 1.0f, 10.0f};
+        
         EntityId light = world.CreateEntity();
         TransformComponent& lt = world.AddComponent<TransformComponent>(light);
         lt.local.SetPosition(XMFLOAT3(0.0f, 15.0f,5.0f));

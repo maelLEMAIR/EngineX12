@@ -22,6 +22,10 @@ EntityId NetworkRegistry::GetLocalId(uint32_t networkId) const
 
 bool NetworkRegistry::HasNetworkId(uint32_t networkId) const
 {
+    for (const auto& it : m_map)
+        std::cout << RED << it.first << " | ";
+
+    std::cout << RESET << '\n';
     return m_map.contains(networkId);
 }
 

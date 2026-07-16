@@ -1,7 +1,6 @@
 ﻿#ifndef NETWORK_INTERPOLATOR_H_INCLUDED
 #define NETWORK_INTERPOLATOR_H_INCLUDED
 
-#include <deque>
 #include <chrono>
 
 #include "Core/define.h"
@@ -19,8 +18,11 @@ struct TransformSnapshot
 
 struct NetworkInterpolator
 {
-    std::deque<TransformSnapshot> buffer;
     static constexpr size_t MAX_BUFFER_SIZE = 32;
+
+    TransformSnapshot buffer[MAX_BUFFER_SIZE]{};
+    size_t count = 0;
+    size_t head  = 0;
 
     float GetDelay() const
     {
@@ -29,12 +31,19 @@ struct NetworkInterpolator
     }
 
     void AddSnapshot(const XMFLOAT3& pos, const XMFLOAT3& scale,
-                     const XMFLOAT4& quat, float timestamp)
+                      const XMFLOAT4& quat, float timestamp)
     {
-        buffer.push_back({ timestamp, pos, scale, quat });
-        if (buffer.size() > MAX_BUFFER_SIZE)
-            buffer.pop_front();
+        size_t writeIndex = (head + count) % MAX_BUFFER_SIZE;
+        buffer[writeIndex] = { timestamp, pos, scale, quat };
+
+        if (count < MAX_BUFFER_SIZE)
+            count++;
+        else
+            head = (head + 1) % MAX_BUFFER_SIZE;
     }
+
+    TransformSnapshot& At(size_t i) { return buffer[(head + i) % MAX_BUFFER_SIZE]; }
+    size_t Size() const { return count; }
 };
 
 #endif

@@ -11,68 +11,6 @@ Transform::Transform()
     ResetRotation();
 }
 
-Transform::Transform(const Transform& other)
-        : pos(other.pos),
-          scale(other.scale),
-          forward(other.forward),
-          up(other.up),
-          right(other.right),
-          quat(other.quat),
-          rotMatrix(other.rotMatrix),
-          matrix(other.matrix),
-          invMatrix(other.invMatrix),
-          dirty(other.dirty)
-{
-}
-
-Transform::Transform(Transform&& other) noexcept
-    : pos(std::move(other.pos)),
-      scale(std::move(other.scale)),
-      forward(std::move(other.forward)),
-      up(std::move(other.up)),
-      right(std::move(other.right)),
-      quat(std::move(other.quat)),
-      rotMatrix(std::move(other.rotMatrix)),
-      matrix(std::move(other.matrix)),
-      invMatrix(std::move(other.invMatrix)),
-      dirty(other.dirty)
-{
-}
-
-Transform& Transform::operator=(const Transform& other)
-{
-    if (this == &other)
-        return *this;
-    pos = other.pos;
-    scale = other.scale;
-    forward = other.forward;
-    up = other.up;
-    right = other.right;
-    quat = other.quat;
-    rotMatrix = other.rotMatrix;
-    matrix = other.matrix;
-    invMatrix = other.invMatrix;
-    dirty = other.dirty;
-    return *this;
-}
-
-Transform& Transform::operator=(Transform&& other) noexcept
-{
-    if (this == &other)
-        return *this;
-    pos  = std::move(other.pos);
-    scale = std::move(other.scale);
-    forward  = std::move(other.forward);
-    up       = std::move(other.up);
-    right    = std::move(other.right);
-    quat = std::move(other.quat);
-    rotMatrix  = std::move(other.rotMatrix);
-    matrix = std::move(other.matrix);
-    invMatrix = std::move(other.invMatrix);
-    dirty     = other.dirty;
-    return *this;
-}
-
 XMFLOAT4X4& Transform::GetMatrix()
 {
     if (dirty & (uint8)DIRTY_FLAG::WORLD)

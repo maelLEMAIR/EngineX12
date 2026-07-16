@@ -3,6 +3,7 @@
 
 #include "PacketHandler.h"
 
+#include "EngineManager.h"
 #include "NetworkContext.h"
 #include "NetworkFlag.h"
 #include "NetworkIdentity.h"
@@ -16,10 +17,8 @@
 #include "../NetworkRegistry.h"
 #include "../Engine/ECS/World.h"
 #include "../Engine/Components/TransformComponent.hpp"
-#include "../ComponentDispatcher.h"
 #include "Components/MeshRenderer.hpp"
 
-static void ApplyComponent(Serialization::Deserializeration& d, World& world, EntityId localId, uint32_t componentId);
 void ApplyInput(const InputPacket& input, World& world);
 
 void PacketHandler::Handle(const NetworkPacket& packet, World& world)
@@ -33,16 +32,16 @@ void PacketHandler::Handle(const NetworkPacket& packet, World& world)
 
     switch (type)
     {
-        case PacketType::EntityCreated:   HandleEntityCreated  (d, world);          break;
-        case PacketType::EntityDestroyed: HandleEntityDestroyed(d, world);          break;
-        case PacketType::ComponentUpdate: HandleComponentUpdate(d, world);          break;
-        case PacketType::Input:           HandleInput(d, world, packet.address);    break;
-        case PacketType::Snapshot:        HandleSnapshot       (d, world);          break;
-        case PacketType::Connect:         HandleConnected(d, world, packet.address);break;
-        case PacketType::Ping:            HandlePing(d, packet.address);               break;
-        case PacketType::Pong:            HandlePong(d);                               break;
-        case PacketType::Disconnect: HandleDisconnect(d, world, packet.address);    break;
-        default:                                                                          break;
+        case PacketType::EntityCreated:   HandleEntityCreated  (d, world);               break;
+        case PacketType::EntityDestroyed: HandleEntityDestroyed(d, world);               break;
+        case PacketType::ComponentUpdate: HandleComponentUpdate(d, world);               break;
+        case PacketType::Input:           HandleInput(d, world, packet.address);         break;
+        case PacketType::Snapshot:        HandleSnapshot       (d, world);               break;
+        case PacketType::Connect:         HandleConnected(d, world, packet.address);     break;
+        case PacketType::Ping:            HandlePing(d, packet.address);                    break;
+        case PacketType::Pong:            HandlePong(d);                                    break;
+        case PacketType::Disconnect:      HandleDisconnect(d, world, packet.address);    break;
+        default:                                                                               break;
     }
 }
 
@@ -97,18 +96,21 @@ void PacketHandler::HandlePong(Serialization::Deserializeration& d)
 }
 
 void PacketHandler::HandleEntityCreated(Serialization::Deserializeration& d, World& world)
-{
-    uint32_t networkId, componentId;
-    if (!d.read(networkId) || !d.read(componentId)) return;
+{ 
+    uint32_t networkId;
+    if (!d.read(networkId)) return;
 
     EntityId localId = world.CreateEntity();
-    NetworkRegistry::Get().Register(networkId, localId);
+    world.AddComponent<NetworkInterpolator>(localId);
+    world.AddComponent<DirtyFlag>(localId);
+    
+    MeshRenderer& mesh = world.AddComponent<MeshRenderer>(localId);
+    mesh.geoId = RessourceManager::GetGeometryId("Cube");
 
     auto& identity    = world.AddComponent<NetworkIdentity>(localId);
     identity.networkId = networkId;
-    identity.isOwner   = false;
 
-    ApplyComponent(d, world, localId, componentId);
+    NetworkRegistry::Get().Register(networkId, localId);
 }
 
 void PacketHandler::HandleEntityDestroyed(Serialization::Deserializeration& d, World& world)
@@ -139,7 +141,7 @@ void PacketHandler::HandleInput(Serialization::Deserializeration& d, World& worl
         return;
     }
     
-    float speed = 100.0f * m_deltaTime;
+    float speed = 10.0f * m_deltaTime;
     if (input.moveForward)  t->local.Move(t->local.forward, speed);
     if (input.moveBackward) t->local.Move(t->local.forward, -speed);
     if (input.moveLeft)     t->local.Move(t->local.right, -speed);
@@ -151,14 +153,15 @@ void PacketHandler::HandleInput(Serialization::Deserializeration& d, World& worl
 void PacketHandler::HandleComponentUpdate(Serialization::Deserializeration& d, World& world)
 {
     uint32_t networkId, componentId;
+    
     if (!d.read(networkId) || !d.read(componentId)) return;
+    
     if (!NetworkRegistry::Get().HasNetworkId(networkId)) return;
 
     switch (componentId)
     {
     case 0x01:
     {
-        if (!NetworkRegistry::Get().HasNetworkId(networkId)) return;
         EntityId localId = NetworkRegistry::Get().GetLocalId(networkId);
 
         XMFLOAT3 pos, scale;
@@ -167,14 +170,25 @@ void PacketHandler::HandleComponentUpdate(Serialization::Deserializeration& d, W
         d.read(pos.x);   d.read(pos.y);   d.read(pos.z);
         d.read(scale.x); d.read(scale.y); d.read(scale.z);
         d.read(quat.x);  d.read(quat.y);  d.read(quat.z); d.read(quat.w);
-        
-        TransformComponent* t = world.GetComponent<TransformComponent>(localId);
-        if (!t) return;
-        t->local.pos   = pos;
-        t->local.scale = scale;
-        t->local.quat  = quat;
-        t->local.UpdateRotationFromQuaternion();
-        t->local.UpdateMatrix();
+
+        NetworkInterpolator* interp = world.GetComponent<NetworkInterpolator>(localId);
+            
+        if (interp)
+        {
+            interp->AddSnapshot(pos, scale, quat, EngineManager::GetInstance().GetTotalTime());
+        }
+        else
+        {
+            TransformComponent* t = world.GetComponent<TransformComponent>(localId);
+            if (!t) return;
+            t->local.pos   = pos;
+            t->local.scale = scale;
+            t->local.quat  = quat;
+            t->local.UpdateRotationFromQuaternion();
+            t->world = t->local;
+            t->world.UpdateMatrix();
+        }
+            
         break;
     }
     case 0x02: // Health
@@ -198,26 +212,23 @@ void PacketHandler::HandleSnapshot(Serialization::Deserializeration& d, World& w
     
     for (uint32_t i = 0; i < count; i++)
     {
-        uint32_t networkId;
-        bool     isOwner;
-
-        if (!d.read(networkId) || !d.read(isOwner)) return;
+        uint32 networkId;
         
+        if (!d.read(networkId)) return;
+
+        std::cout << BLUE << networkId << "\n" << RESET;
         EntityId localId = world.CreateEntity();
-        world.AddComponent<TransformComponent>(localId);
         world.AddComponent<NetworkIdentity>(localId);
         world.AddComponent<DirtyFlag>(localId);
         world.AddComponent<NetworkInterpolator>(localId);
-        MeshRenderer& mesh = world.AddComponent<MeshRenderer>(localId);
-        mesh.geoId = RessourceManager::GetGeometryId("Cube");
+        world.AddComponent<MeshRenderer>(localId);
         
         NetworkIdentity* identity = world.GetComponent<NetworkIdentity>(localId);
         identity->networkId = networkId;
-        identity->isOwner   = isOwner;
-
+        
         NetworkRegistry::Get().Register(networkId, localId);
 
-        // Désérialiser le transform
+        // Deserialize le transform
         {
             TransformComponent* t = world.GetComponent<TransformComponent>(localId);
 
@@ -227,12 +238,6 @@ void PacketHandler::HandleSnapshot(Serialization::Deserializeration& d, World& w
             t->local.UpdateMatrix();
         }
     }
-}
-
-static void ApplyComponent(Serialization::Deserializeration& d,
-                           World& world, EntityId localId, uint32_t componentId)
-{
-    ComponentDispatcher::Get().Apply(componentId, d, world, localId);
 }
 
 #endif

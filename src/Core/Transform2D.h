@@ -23,10 +23,10 @@ public:
     Transform2D();
     ~Transform2D() = default;
 
-    Transform2D(const Transform2D& other);
-    Transform2D(Transform2D&& other) noexcept;
-    Transform2D& operator=(const Transform2D& other);
-    Transform2D& operator=(Transform2D&& other) noexcept;
+    Transform2D(const Transform2D& other)                = default;
+    Transform2D(Transform2D&& other) noexcept             = default;
+    Transform2D& operator=(const Transform2D& other)      = default;
+    Transform2D& operator=(Transform2D&& other) noexcept  = default;
 
     XMFLOAT4X4& GetMatrix();
 

@@ -7,6 +7,10 @@
 template<typename T>
 T& World::AddComponent(EntityId _entityId)
 {
+    static_assert(std::is_trivially_copyable_v<T>,
+        "Les composants ECS doivent etre trivially copyable (Column utilise memcpy en interne). "
+        "Pas de std::string/std::vector/std::deque/std::function dans un composant : "
+        "utilise un buffer fixe ou stocke les donnees ailleurs.");
     if (m_isQuerying)
     {
         m_isQuerying = false;
@@ -14,13 +18,19 @@ T& World::AddComponent(EntityId _entityId)
         m_isQuerying = true;
         return ref;
     }
-    
+
     EntityRecord* record = m_entityManager.GetEntity(_entityId);
-    assert(record != nullptr && "AddComponent : entité inexistante");
+    assert(record != nullptr && "AddComponent : entite inexistante");
 
     ComponentId compId = m_componentRegister.GetComponentId<T>();
 
     Archetype* src = record->archetype;
+
+    if (src && src->signature.test(compId))
+    {
+        int col = src->GetColumnIndex(compId);
+        return *reinterpret_cast<T*>(src->columns[col].GetElement(record->rowId));
+    }
     
     if (src == nullptr)
         src = m_archetypeManager.archetypeSystem.GetEmptyArchetype();
@@ -53,7 +63,7 @@ template<typename T>
 void World::RemoveComponent(EntityId _entityId)
 {
     EntityRecord* record = m_entityManager.GetEntity(_entityId);
-    assert(record != nullptr && "RemoveComponent : entité inexistante");
+    assert(record != nullptr && "RemoveComponent : entite inexistante");
 
     ComponentId compId = m_componentRegister.GetComponentId<T>();
 
@@ -62,12 +72,13 @@ void World::RemoveComponent(EntityId _entityId)
 
     if (src != dst)
     {
-        m_archetypeManager.MoveEntity( _entityId,
+        m_archetypeManager.MoveEntity(_entityId,
             src, dst,
             [this](EntityId id) { return m_entityManager.GetEntity(id); }
         );
+
+        m_eventDispatcher.DispatchComponentRemoved(*this, _entityId, compId);
     }
-    m_eventDispatcher.DispatchComponentRemoved(*this, _entityId, compId);
 }
 
 template<typename T>

@@ -31,7 +31,7 @@ public:
         float rtt = m_pingTime.GetElapsedTime() * 1000.f;
         m_latency = rtt * 0.5f;
 
-        std::cout << "[PING] Latence: " << m_latency << " ms\n";
+        std::cout << "[PING] Latency: " << m_latency << " ms\n";
     }
 
     float GetLatency() const

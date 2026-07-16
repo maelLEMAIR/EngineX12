@@ -4,32 +4,18 @@
 #include "Test.h"
 #include "Engine.h"
 #include "InputManager.h"
-#include "InterpolationSystem.h"
-#include "NetworkSyncSystem.h"
 #include "Components/TextComponent.h"
+
+#include "NetworkBridge/SystemsNetwork/InterpolationSystem.h"
+#include "NetworkBridge/SystemsNetwork/NetworkSyncSystem.h"
 #include "NetworkBridge/NetworkContext.h"
 #include "NetworkBridge/NetworkFlag.h"
 #include "NetworkBridge/NetworkIdentity.h"
 #include "NetworkBridge/NetworkRegistry.h"
 #include "NetworkBridge/Packet/PacketInput.h"
+
 #include "Engine/Components/TransformComponent.hpp"
 #include "Packet/PacketDef.h"
-
-class TestNetworkScene;
-
-class TestNetwork : public Test
-{
-public: 
-    static void Run(int argc, char* argv[])
-    {
-        EngineManager::GetInstance().Initialize(1280, 720, L"TestNetwork", true, argc, argv);
-
-        SceneManager::CreateSceneType<TestNetworkScene>("TestNetwork");
-        SceneManager::SetCurrentScene("TestNetwork");
-
-        EngineManager::GetInstance().Run();
-    }
-};
 
 class TestNetworkScene : public Scene
 {
@@ -44,17 +30,16 @@ public:
 
     void OnUpdate(float dt) override
     {
-        /*if (NetworkContext::Get().IsServer())
-            UpdateServer(dt);*/
         if (NetworkContext::Get().IsClient())
         {
-            /*String text = std::to_string(PingManager::Get().GetLatency()) + " ms";
-            m_pText->SetString( text );*/
+            String text = std::to_string((int)PingManager::Get().GetLatency()) + " ms";
+            m_pText->SetString( text );
             SendInputs(dt);
         }
     }
-
+    uint8 player = 0;
 private:
+    
     EntityId m_entity   = 0;
     EntityId m_textPing = 0;
 
@@ -64,16 +49,12 @@ private:
     void InitServer()
     {
         std::cout << "[SERVER] Start on port 7777\n";
-        
-        world.RegisterSystem<InterpolationSystem>(9);
         auto* syncSystem = world.RegisterSystem<NetworkSyncSystem>(10);
         syncSystem->SetNetworkManager(&NetworkContext::Get().GetManager());
     }
 
     void InitClient()
     {
-        RessourceManager::AddCamera("Default");
-        
         Serialization::Serializer s;
         s.write((uint8)PacketType::Connect);
         
@@ -84,14 +65,8 @@ private:
         for (const auto& peer : net.GetPeers())
             net.SendTo(s.GetBuffer(), peer);
         
-        /*m_entity = world.CreateEntity();
-        TransformComponent& transformEntity = world.AddComponent<TransformComponent>(m_entity);
-        transformEntity.local.SetPosition(XMFLOAT3(0.0f, 0.0f, 10.0f));
-        MeshRenderer& rendererEntity = world.AddComponent<MeshRenderer>(m_entity);
-        rendererEntity.geoId = RessourceManager::GetGeometryId("Cube");*/
-        
         {
-            RenderFont* font = EngineManager::GetDevice()->CreateRenderFont(RES("/Font/GoldenVarsity.ttf"), 100.0f);
+            RenderFont* font = EngineManager::GetDevice()->CreateRenderFont(RES("/Font/west.ttf"), 25.0f);
 
             m_pText = EngineManager::GetDevice()->CreateText(font);
             m_pText->SetString("0 ms");
@@ -100,7 +75,9 @@ private:
             m_textPing = world.CreateEntity();
             TextComponent& dayText = world.AddComponent<TextComponent>(m_textPing);
             dayText.textId = RessourceManager::GetTextId("PingLabel");
-            dayText.transform.SetPosition(XMFLOAT2(-900.0f, -500.0f));
+            int widthWin = EngineManager::GetWindow()->GetWidth();
+            int heightWin = EngineManager::GetWindow()->GetHeight();
+            dayText.transform.SetPosition(XMFLOAT2(- widthWin / 3.0f, - heightWin / 3.0f));
         }
 
         EntityId camera = world.CreateEntity();
@@ -117,19 +94,22 @@ private:
         timer += dt;
         if (timer < 1.f / 20.f) return;
         timer = 0.f;
-        
-        InputPacket input;
-        input.moveForward  = InputManager::IsKeyPressed(Z) || InputManager::IsKeyDown(Z);
-        input.moveBackward = InputManager::IsKeyPressed(S) || InputManager::IsKeyDown(S);
-        input.moveLeft     = InputManager::IsKeyPressed(Q) || InputManager::IsKeyDown(Q);
-        input.moveRight    = InputManager::IsKeyPressed(D) || InputManager::IsKeyDown(D);
-        input.jump         = InputManager::IsKeyDown(SPACE);
 
-        auto mousePos = InputManager::GetMousePositionCenter();
-        input.mouseLeft   = InputManager::IsMouseButtonPressed(LEFT_MOUSE) 
-                         || InputManager::IsMouseButtonDown(LEFT_MOUSE);
-        input.mouseRight  = InputManager::IsMouseButtonPressed(RIGHT_MOUSE) 
-                         || InputManager::IsMouseButtonDown(RIGHT_MOUSE);
+        InputPacket input;
+        if ( player == 1)
+        {
+            input.moveForward  = InputManager::IsKeyPressed(Z) || InputManager::IsKeyDown(Z);
+            input.moveBackward = InputManager::IsKeyPressed(S) || InputManager::IsKeyDown(S);
+            input.moveLeft     = InputManager::IsKeyPressed(Q) || InputManager::IsKeyDown(Q);
+            input.moveRight    = InputManager::IsKeyPressed(D) || InputManager::IsKeyDown(D);
+        }
+        if ( player == 2)
+        {
+            input.moveForward  = InputManager::IsKeyPressed(UP_ARROW) || InputManager::IsKeyDown(UP_ARROW);
+            input.moveBackward = InputManager::IsKeyPressed(DOWN_ARROW) || InputManager::IsKeyDown(DOWN_ARROW);
+            input.moveLeft     = InputManager::IsKeyPressed(LEFT_ARROW) || InputManager::IsKeyDown(LEFT_ARROW);
+            input.moveRight    = InputManager::IsKeyPressed(RIGHT_ARROW) || InputManager::IsKeyDown(RIGHT_ARROW);
+        }
         
         if ( !input.moveForward && !input.moveBackward &&
             !input.moveLeft && !input.moveRight && !input.jump &&
@@ -145,23 +125,20 @@ private:
             net.SendTo(s.GetBuffer(), peer);
         }
     }
-    
-    void UpdateServer(float dt)
+};
+
+class TestNetwork : public Test
+{
+public: 
+    static void Run(int argc, char* argv[])
     {
-        m_timer += dt;
-        if (m_timer >= 1.f)
-        {
-            m_timer = 0.f;
+        EngineManager::GetInstance().Initialize(1280, 720, L"TestNetwork", false, argc, argv);
 
-            TransformComponent* t    = world.GetComponent<TransformComponent>(m_entity);
-            DirtyFlag*          flag = world.GetComponent<DirtyFlag>(m_entity);
-
-            if (t && flag)
-            {
-                t->local.pos.x += 1.f;
-                flag->Mark(0);
-            }
-        }
+        SceneManager::CreateSceneType<TestNetworkScene>("TestNetwork");
+        TestNetworkScene* scene = reinterpret_cast<TestNetworkScene*>(SceneManager::SetCurrentScene("TestNetwork"));
+        NetworkLaunchArgs netArgs = NetworkLaunchArgs::Parse(argc, argv);
+        scene->player = netArgs.player;
+        EngineManager::GetInstance().Run();
     }
 };
 

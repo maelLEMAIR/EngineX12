@@ -34,6 +34,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int)
 
     EngineManager::GetInstance().Initialize(1280, 720, L"EngineX12",
                                             false, argc, argv.data());
+    
     EngineManager::GetInstance().Run();
 
     Console::DeleteConsol();

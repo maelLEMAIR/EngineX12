@@ -11,6 +11,7 @@ struct NetworkLaunchArgs
     std::string serverIp   = "127.0.0.1";  // utilisé côté client
     uint16_t    serverPort = 7777;
     uint16_t    localPort  = 7777;          // utilisé côté serveur
+    uint8       player     = 0;
 
     static NetworkLaunchArgs Parse(int argc, char* argv[])
     {
@@ -28,7 +29,7 @@ struct NetworkLaunchArgs
             else if (arg == "--client")
             {
                 args.role      = NetworkRole::Client;
-                args.localPort = 7778;
+                args.localPort = 0;
             }
             else if (arg == "--ip" && i + 1 < argc)
             {
@@ -37,6 +38,10 @@ struct NetworkLaunchArgs
             else if (arg == "--port" && i + 1 < argc)
             {
                 args.serverPort = (uint16_t)std::stoi(argv[++i]);
+            }
+            else if (arg == "--player" && i + 1 < argc)
+            {
+                args.player = (uint8)std::stoi(argv[++i]);
             }
         }
 

@@ -15,7 +15,6 @@
 #include "../Network/NetworkQueue.h"
 
 ////////////// NETWORK BRIDGE
-#include "NetworkBridge/ComponentDispatcher.h"
 #include "NetworkBridge/NetworkBridgeInit.h"
 #include "NetworkBridge/NetworkComponentIndex.h"
 #include "NetworkBridge/NetworkContext.h"
@@ -53,14 +52,13 @@ EngineManager& EngineManager::GetInstance()
 
 void EngineManager::Exit()
 {
-    
+    NetworkContext::Get().Disconnect();
 }
 
 void EngineManager::Initialize(UINT _width, UINT _height, WString _title, bool _fullscreen, int argc, char* argv[])
 {
     NetworkLaunchArgs netArgs = NetworkLaunchArgs::Parse(argc, argv);
     NetworkContext::Get().Initialize(netArgs);
-    NetworkBridge::RegisterComponents();
 
     m_pPacketHandler = new PacketHandler();
     m_pPacketHandler->SetNetworkManager(&NetworkContext::Get().GetManager());
@@ -98,6 +96,11 @@ void EngineManager::Initialize(UINT _width, UINT _height, WString _title, bool _
     white->SetFloat4("DiffuseAlbedo", {1.0f, 1.0f, 1.0f, 1.0f});
     RessourceManager::AddMaterial("Default", white);
 
+    Material* red = coloredS->CreateMaterial();
+    red->SetFloat4("DiffuseAlbedo", {1.0f, 0.0f, 0.0f, 1.0f});
+    RessourceManager::AddMaterial("Red", red);
+    
+    RessourceManager::AddCamera("Default");
     InputManager::Initialize(m_pWindow->GetHWND());
 }
 
@@ -155,8 +158,6 @@ void EngineManager::Run()
         }
         m_pSceneManager->GetCurrentScene()->Update(m_deltaTime);
     }
-    
-    NetworkContext::Get().Disconnect();
 }
 
 void EngineManager::TryRegisterNewClients(const NetworkPacket& packet, NetworkManager& net)
@@ -171,14 +172,10 @@ void EngineManager::TryRegisterNewClients(const NetworkPacket& packet, NetworkMa
     
     if (static_cast<PacketType>(packet.data[0]) != PacketType::Connect) return;
 
-    if (PlayerRegistry::Get().Has(packet.address)) return;
-
-    net.AddPeerAddress(packet.address);
-
     World& world = m_pSceneManager->GetCurrentScene()->world;
 
+    std::cout << GREEN << "NEW CLIENT \n" << RESET;
     EntityId localId = world.CreateEntity();
-    world.AddComponent<TransformComponent>(localId);
     world.AddComponent<NetworkIdentity>(localId);
     world.AddComponent<DirtyFlag>(localId);
 
@@ -186,8 +183,7 @@ void EngineManager::TryRegisterNewClients(const NetworkPacket& packet, NetworkMa
 
     NetworkIdentity* identity = world.GetComponent<NetworkIdentity>(localId);
     identity->networkId = netId;
-    identity->isOwner   = false;
-
+    
     NetworkRegistry::Get().Register(netId, localId);
     PlayerRegistry::Get().Register(packet.address, localId);
     
@@ -197,11 +193,17 @@ void EngineManager::TryRegisterNewClients(const NetworkPacket& packet, NetworkMa
     s.write((uint8)PacketType::EntityCreated);
     s.write(netId);
     s.write(true);
-    net.SendTo(s.GetBuffer(), packet.address);
     
+    for (const auto& peer : net.GetPeers())
+    {
+        net.SendTo(s.GetBuffer(), peer);
+    }
+
+    net.AddPeerAddress(packet.address);
+
     auto snapshot = PacketBuilder::Snapshot(world);
     net.SendTo(snapshot, packet.address);
-
+    
     std::cout << "[SERVER] Snapshot send to new client\n";
 }
 

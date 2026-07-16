@@ -24,10 +24,10 @@ public:
     Transform();
     ~Transform() = default;
 
-    Transform(const Transform& other);
-    Transform(Transform&& other) noexcept;
-    Transform& operator=(const Transform& other);
-    Transform& operator=(Transform&& other) noexcept;
+    Transform(const Transform& other)                = default;
+    Transform(Transform&& other) noexcept             = default;
+    Transform& operator=(const Transform& other)      = default;
+    Transform& operator=(Transform&& other) noexcept  = default;
     
     XMFLOAT4X4& GetMatrix();
     XMFLOAT4X4& GetInvMatrix();
