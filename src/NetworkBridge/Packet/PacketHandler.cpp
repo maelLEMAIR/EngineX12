@@ -98,6 +98,9 @@ void PacketHandler::HandlePong(Serialization::Deserializeration& d)
 void PacketHandler::HandleEntityCreated(Serialization::Deserializeration& d, World& world)
 { 
     uint32_t networkId;
+    uint32_t geoId;
+    uint32_t materialId;
+    
     if (!d.read(networkId)) return;
 
     EntityId localId = world.CreateEntity();
@@ -105,7 +108,13 @@ void PacketHandler::HandleEntityCreated(Serialization::Deserializeration& d, Wor
     world.AddComponent<DirtyFlag>(localId);
     
     MeshRenderer& mesh = world.AddComponent<MeshRenderer>(localId);
-    mesh.geoId = RessourceManager::GetGeometryId("Cube");
+    if ( !d.read(geoId))
+        mesh.geoId = RessourceManager::GetGeometryId("Cube");
+    else
+        mesh.geoId = geoId;
+
+    if ( d.read(materialId))
+        mesh.materialId = materialId;
 
     auto& identity    = world.AddComponent<NetworkIdentity>(localId);
     identity.networkId = networkId;
@@ -209,34 +218,51 @@ void PacketHandler::HandleSnapshot(Serialization::Deserializeration& d, World& w
     if (!d.read(count)) return;
 
     std::cout << "[CLIENT] Snapshot receive, " << count << " entities " << "\n";
-    
+
     for (uint32_t i = 0; i < count; i++)
     {
-        uint32 networkId;
-        
+        uint32_t networkId;
         if (!d.read(networkId)) return;
 
         std::cout << BLUE << networkId << "\n" << RESET;
+
         EntityId localId = world.CreateEntity();
         world.AddComponent<NetworkIdentity>(localId);
         world.AddComponent<DirtyFlag>(localId);
         world.AddComponent<NetworkInterpolator>(localId);
-        world.AddComponent<MeshRenderer>(localId);
-        
+        MeshRenderer& mesh = world.AddComponent<MeshRenderer>(localId);
+
         NetworkIdentity* identity = world.GetComponent<NetworkIdentity>(localId);
         identity->networkId = networkId;
-        
         NetworkRegistry::Get().Register(networkId, localId);
 
-        // Deserialize le transform
-        {
-            TransformComponent* t = world.GetComponent<TransformComponent>(localId);
+        TransformComponent* t = world.GetComponent<TransformComponent>(localId);
 
-            d.read(t->local.matrix);
+        XMFLOAT3 pos, scale;
+        XMFLOAT4 quat;
 
-            t->local.UpdateRotationFromQuaternion();
-            t->local.UpdateMatrix();
-        }
+        if (!d.read(pos.x))   return;
+        if (!d.read(pos.y))   return;
+        if (!d.read(pos.z))   return;
+        if (!d.read(scale.x)) return;
+        if (!d.read(scale.y)) return;
+        if (!d.read(scale.z)) return;
+        if (!d.read(quat.x))  return;
+        if (!d.read(quat.y))  return;
+        if (!d.read(quat.z))  return;
+        if (!d.read(quat.w))  return;
+
+        if (!d.read(mesh.geoId))      return;
+        if (!d.read(mesh.materialId)) return;
+
+        t->local.pos   = pos;
+        t->local.scale = scale;
+        t->local.quat  = quat;
+        t->local.UpdateRotationFromQuaternion();
+        t->local.UpdateMatrix();
+
+        t->world = t->local;
+        t->world.UpdateMatrix();
     }
 }
 

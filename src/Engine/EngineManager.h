@@ -38,10 +38,6 @@ public:
     static Window* GetWindow() { return GetInstance().m_pWindow; }
     static Device* GetDevice() { return GetInstance().m_pDevice; }
 
-    static bool		IsServer()	{ return GetInstance().m_pServer != nullptr; }
-    static Client*	GetClient() { return GetInstance().m_pClient; }
-    static Server*	GetServer() { return GetInstance().m_pServer; }
-
 private:
     static EngineManager* s_pInstance;
 
@@ -60,9 +56,6 @@ private:
     RessourceManager*   m_pRessourceManager;
     NetworkManager*     m_pNetworkManager;
     PacketHandler*      m_pPacketHandler;
-
-    Client* m_pClient = nullptr;
-    Server* m_pServer = nullptr;
     
     float m_DeltaTime = 0.0f;
 };

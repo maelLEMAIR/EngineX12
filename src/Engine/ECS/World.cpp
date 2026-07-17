@@ -3,6 +3,7 @@
 
 #include "World.h"
 
+#include "SceneManager.h"
 #include "Systems/ScriptSystem.h"
 #include "Systems/MeshRendererSystem.h"
 #include "Systems/TransformSystem.h"
@@ -21,10 +22,13 @@ World::World()
 
     m_systemManager.RegisterSystem<ScriptSystem>(       *this, -1);
     m_systemManager.RegisterSystem<TransformSystem>(    *this, 0);
-    m_systemManager.RegisterSystem<MeshRendererSystem>( *this, 1);
-    m_systemManager.RegisterSystem<CameraSystem>(       *this, 2);
-    m_systemManager.RegisterSystem<LightSystem>(        *this, 3);
-    m_systemManager.RegisterSystem<TextSystem>(        *this, 4);
+    if ( !SceneManager::GetInstance().GetIsServer() )
+    {
+        m_systemManager.RegisterSystem<MeshRendererSystem>( *this, 1);
+        m_systemManager.RegisterSystem<CameraSystem>(       *this, 2);
+        m_systemManager.RegisterSystem<LightSystem>(        *this, 3);
+        m_systemManager.RegisterSystem<TextSystem>(        *this, 4);
+    }
     m_systemManager.RegisterSystem<InterpolationSystem>(*this, 9);
 }
 

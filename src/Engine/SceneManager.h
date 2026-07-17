@@ -25,7 +25,10 @@ public:
 	static Scene* SetCurrentScene(Scene* _pScene);
 	static Scene* SetCurrentScene(String const& _name);
 	static Scene* SetCurrentScene(uint32 _id);
-
+	
+	static void SetIsServer(bool state) { s_pSceneManager->m_isServer = state; }
+	static bool GetIsServer() { return s_pSceneManager->m_isServer; }
+	
 	UnorderedMap<String, uint32>& GetSceneInfos() { return m_sceneIds; }
 
 private:
@@ -35,6 +38,8 @@ private:
 	UnorderedMap<String, uint32> m_sceneIds;
 	
 	Scene* m_pCurrentScene = nullptr;
+
+	bool m_isServer = false;
 };
 
 #include "SceneManager.inl"

@@ -4,6 +4,7 @@
 #include "Test.h"
 #include "Engine.h"
 #include "InputManager.h"
+#include "MapBuilder.hpp"
 #include "Components/TextComponent.h"
 
 #include "NetworkBridge/SystemsNetwork/InterpolationSystem.h"
@@ -51,13 +52,17 @@ private:
         std::cout << "[SERVER] Start on port 7777\n";
         auto* syncSystem = world.RegisterSystem<NetworkSyncSystem>(10);
         syncSystem->SetNetworkManager(&NetworkContext::Get().GetManager());
+        
+        MapBuilder::Build(world, false);
     }
 
     void InitClient()
     {
         Serialization::Serializer s;
         s.write((uint8)PacketType::Connect);
-        
+        s.write(RessourceManager::GetGeometryId("Sphere"));
+        s.write(RessourceManager::GetMaterialId("Red"));
+
         auto& net = NetworkContext::Get().GetManager();
         
         std::cout << "[CLIENT] Send Connect\n";
@@ -86,6 +91,8 @@ private:
         CameraComponent& cam = world.AddComponent<CameraComponent>(camera);
         cam.camId = RessourceManager::GetCameraId("Default");
         cam.isMainCamera = true;
+
+        MapBuilder::Build(world, true);
     }
 
     void SendInputs(float dt)

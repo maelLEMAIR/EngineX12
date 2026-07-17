@@ -48,16 +48,24 @@ public:
     {
         Serialization::Serializer s;
         s.write((uint8)PacketType::Snapshot);
-        
+
         uint32_t count = 0;
-        world.Query<NetworkIdentity>([&](NetworkIdentity&) { count++; });
+        world.Query<NetworkIdentity, TransformComponent, MeshRenderer>(
+            [&](NetworkIdentity&, TransformComponent&, MeshRenderer&) { count++; });
         s.write(count);
-        world.Query<NetworkIdentity, TransformComponent>(
-            [&](NetworkIdentity& identity, TransformComponent& t)
+
+        world.Query<NetworkIdentity, TransformComponent, MeshRenderer>(
+            [&](NetworkIdentity& identity, TransformComponent& t, MeshRenderer& mesh)
             {
                 s.write(identity.networkId);
 
-                s.write(t.local.matrix);
+                s.write(t.local.pos.x);   s.write(t.local.pos.y);   s.write(t.local.pos.z);
+                s.write(t.local.scale.x); s.write(t.local.scale.y); s.write(t.local.scale.z);
+                s.write(t.local.quat.x);  s.write(t.local.quat.y);
+                s.write(t.local.quat.z);  s.write(t.local.quat.w);
+                
+                s.write(mesh.geoId);
+                s.write(mesh.materialId);
             }
         );
 
