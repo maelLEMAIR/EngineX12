@@ -2,6 +2,7 @@
 #define INTERPOLATION_SYSTEM_H_INCLUDED
 
 #include "Core/define.h"
+#include "Core/Utils.hpp"
 #include "Engine/ECS/System.h"
 #include "NetworkInterpolator.h"
 #include "NetworkIdentity.h"
@@ -42,7 +43,7 @@ public:
                 float range = next->timestamp - prev->timestamp;
                 if (range <= 0.f) return;
                 float alpha = (renderTime - prev->timestamp) / range;
-                alpha = std::clamp(alpha, 0.f, 1.f);
+                alpha = Clamp(alpha, 0.f, 1.f);
 
                 t.local.pos.x = prev->pos.x + (next->pos.x - prev->pos.x) * alpha;
                 t.local.pos.y = prev->pos.y + (next->pos.y - prev->pos.y) * alpha;

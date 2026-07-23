@@ -1,358 +1,341 @@
-#ifndef TRANSFORM_CPP_DEFINED
-#define TRANSFORM_CPP_DEFINED
-
 #include "Transform.h"
-
 
 Transform::Transform()
 {
-    dirty = 0;
     SetIdentity();
-    ResetRotation();
+    m_dirty = 0;
 }
 
-Transform::Transform(const Transform& other)
-        : pos(other.pos),
-          scale(other.scale),
-          forward(other.forward),
-          up(other.up),
-          right(other.right),
-          quat(other.quat),
-          rotMatrix(other.rotMatrix),
-          matrix(other.matrix),
-          invMatrix(other.invMatrix),
-          dirty(other.dirty)
+Transform::Transform(Transform const& _o) :
+    m_pos(_o.m_pos), m_scale(_o.m_scale),
+    m_quat(_o.m_quat), m_rotMatrix(_o.m_rotMatrix),
+    m_matrix(_o.m_matrix),
+    m_invMatrix(_o.m_invMatrix),
+    m_dirty(_o.m_dirty)
 {
+    
 }
 
-Transform::Transform(Transform&& other) noexcept
-    : pos(std::move(other.pos)),
-      scale(std::move(other.scale)),
-      forward(std::move(other.forward)),
-      up(std::move(other.up)),
-      right(std::move(other.right)),
-      quat(std::move(other.quat)),
-      rotMatrix(std::move(other.rotMatrix)),
-      matrix(std::move(other.matrix)),
-      invMatrix(std::move(other.invMatrix)),
-      dirty(other.dirty)
+Transform::Transform(Transform&& _o) noexcept :
+    m_pos(_o.m_pos), m_scale(_o.m_scale),
+    m_quat(_o.m_quat), m_rotMatrix(_o.m_rotMatrix),
+    m_matrix(_o.m_matrix),
+    m_invMatrix(_o.m_invMatrix),
+    m_dirty(_o.m_dirty)
 {
+    
 }
 
-Transform& Transform::operator=(const Transform& other)
+Transform& Transform::operator=(Transform const& _o) 
 {
-    if (this == &other)
+    if (this == &_o)
         return *this;
-    pos = other.pos;
-    scale = other.scale;
-    forward = other.forward;
-    up = other.up;
-    right = other.right;
-    quat = other.quat;
-    rotMatrix = other.rotMatrix;
-    matrix = other.matrix;
-    invMatrix = other.invMatrix;
-    dirty = other.dirty;
+
+    m_pos = _o.m_pos;
+    m_scale = _o.m_scale;
+    m_quat = _o.m_quat;
+    m_rotMatrix = _o.m_rotMatrix;
+    m_matrix = _o.m_matrix;
+    m_invMatrix = _o.m_invMatrix;
+    m_dirty = _o.m_dirty;
+
     return *this;
 }
 
-Transform& Transform::operator=(Transform&& other) noexcept
+Transform& Transform::operator=(Transform&& _o) noexcept
 {
-    if (this == &other)
+    if (this == &_o)
         return *this;
-    pos  = std::move(other.pos);
-    scale = std::move(other.scale);
-    forward  = std::move(other.forward);
-    up       = std::move(other.up);
-    right    = std::move(other.right);
-    quat = std::move(other.quat);
-    rotMatrix  = std::move(other.rotMatrix);
-    matrix = std::move(other.matrix);
-    invMatrix = std::move(other.invMatrix);
-    dirty     = other.dirty;
+
+    m_pos = _o.m_pos;
+    m_scale = _o.m_scale;
+    m_quat = _o.m_quat;
+    m_rotMatrix = _o.m_rotMatrix;
+    m_matrix = _o.m_matrix;
+    m_invMatrix = _o.m_invMatrix;
+    m_dirty = _o.m_dirty;
+
+
     return *this;
-}
-
-XMFLOAT4X4& Transform::GetMatrix()
-{
-    if (dirty & (uint8)DIRTY_FLAG::WORLD)
-        UpdateMatrix();
-    
-    return matrix;
-}
-
-XMFLOAT4X4& Transform::GetInvMatrix()
-{
-    if (dirty & (uint8)DIRTY_FLAG::INVERSE)
-        UpdateInvMatrix();
-    
-    return invMatrix;
 }
 
 void Transform::SetIdentity()
 {
-    pos    = XMFLOAT3(0.0f, 0.0f, 0.0f);
-    scale  = XMFLOAT3(1.0f, 1.0f, 1.0f);
-    quat   = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+    m_pos = { 0.0f, 0.0f, 0.0f };
+    m_scale = { 1.0f, 1.0f, 1.0f };
+    m_quat = Quaternion();
+
+    m_matrix = Mat4f32::Identity();
+    m_invMatrix = Mat4f32::Identity();
+
     ResetRotation();
-    XMStoreFloat4x4(&matrix, XMMatrixIdentity());
-    XMStoreFloat4x4(&invMatrix, XMMatrixIdentity());
 }
 
 void Transform::UpdateMatrix()
 {
-    XMVECTOR p = XMLoadFloat3(&pos);
-    XMVECTOR s = XMLoadFloat3(&scale);
-    XMVECTOR r = XMLoadFloat4(&quat);
-
-    XMMATRIX m = XMMatrixAffineTransformation(s, XMVectorZero(), r, p);
-    XMStoreFloat4x4(&matrix, m);
+    if (GetDirtyState(World))
+    {
+        m_matrix = Mat4f32::MakeTransform(m_pos, m_scale, m_quat);
+        RemoveFlag(World);
+    }
     
-    dirty &= ~(uint8)DIRTY_FLAG::POS;
-    dirty &= ~(uint8)DIRTY_FLAG::SCALE;
-    dirty &= ~(uint8)DIRTY_FLAG::ROTATE;
-
-    dirty |= (uint8)DIRTY_FLAG::WORLD;
-    dirty |= (uint8)DIRTY_FLAG::INVERSE;
+    if (GetDirtyState(RotationScale))
+    {
+        Mat3f32 rotScale = GetRotMatrix();
+        for (int i = 0; i < 3; i++)
+        {
+            rotScale.rows[i] *= m_scale[i];
+            m_matrix.rows[i] = Vect4f32(rotScale.rows[i], 0);
+        }
+        
+        RemoveFlag(RotationScale);
+    }
+    
+    if (GetDirtyState(Position))
+    {
+        m_matrix.rows[3] = Vect4f32(m_pos, 1);
+        RemoveFlag(Position);   
+    }
 }
 
 void Transform::UpdateInvMatrix()
 {
-    if (dirty & (uint8)DIRTY_FLAG::WORLD)
+    if (IsWorldDirty() == true)
         UpdateMatrix();
     
-    XMMATRIX m = XMLoadFloat4x4(&matrix);
-    XMStoreFloat4x4(&invMatrix, XMMatrixInverse(nullptr, m));
-
-    dirty &= ~(uint8)DIRTY_FLAG::INVERSE;
+    m_invMatrix = Mat4f32::Invert(m_matrix);
+    RemoveFlag(Inverse);
 }
 
-void Transform::UpdateFromParent(Transform const& parent)
+bool Transform::IsWorldDirty() const
 {
-    XMVECTOR parentScale = XMLoadFloat3(&parent.scale);
-    XMVECTOR localScale  = XMLoadFloat3(&scale);
-    XMVECTOR worldScale  = XMVectorMultiply(parentScale, localScale);
-    XMStoreFloat3(&scale, worldScale);
-    
-    XMVECTOR parentQuat = XMLoadFloat4(&parent.quat);
-    XMVECTOR localQuat  = XMLoadFloat4(&quat);
-    XMVECTOR worldQuat  = XMQuaternionMultiply(localQuat, parentQuat);
-    worldQuat           = XMQuaternionNormalize(worldQuat);
-    XMStoreFloat4(&quat, worldQuat);
-    
-    XMVECTOR localPos  = XMLoadFloat3(&pos);
-    XMVECTOR parentPos = XMLoadFloat3(&parent.pos);
-    
-    localPos = XMVectorMultiply(localPos, parentScale);
-    
-    localPos = XMVector3Rotate(localPos, parentQuat);
-    
-    XMVECTOR worldPos = XMVectorAdd(localPos, parentPos);
-    XMStoreFloat3(&pos, worldPos);
-    
-    UpdateRotationFromQuaternion();
-    dirty |= (uint8)DIRTY_FLAG::WORLD | (uint8)DIRTY_FLAG::INVERSE;
+   return GetDirtyState(RotationScale) || GetDirtyState(Position);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-/// POSITION ///
-///////////////////////////////////////////////////////////////////////////////////////
-
-void Transform::SetPosition(XMFLOAT3 const& position)
+bool Transform::IsInverseDirty() const
 {
-    pos = position;
-    dirty |= (uint8)DIRTY_FLAG::POS;
+    return GetDirtyState(Inverse);
 }
 
-void Transform::Move(XMFLOAT3 const& delta)
+Mat4f32 const& Transform::GetMatrix()
 {
-    pos.x += delta.x;
-    pos.y += delta.y;
-    pos.z += delta.z;
-    
-    dirty |= (uint8)DIRTY_FLAG::POS;
+    if (IsWorldDirty() == true)
+        UpdateMatrix();
+
+    return m_matrix;
 }
 
-void Transform::Move(XMFLOAT3 const& dir, float distance)
+Mat4f32 const& Transform::GetInvMatrix()
 {
-    pos.x += dir.x * distance;
-    pos.y += dir.y * distance;
-    pos.z += dir.z * distance;
+    if (IsInverseDirty() == true)
+        UpdateInvMatrix();
 
-    dirty |= (uint8)DIRTY_FLAG::POS;
+    return m_invMatrix;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-/// SCALE ///
-///////////////////////////////////////////////////////////////////////////////////////
-
-void Transform::SetScale(XMFLOAT3 const& _scale)
+Mat4f32 Transform::UpdateFromParent(Mat4f32 const& _p)
 {
-    scale = _scale;
-    dirty |= (uint8)DIRTY_FLAG::SCALE;
+    return GetMatrix() * _p;
+}
+
+void Transform::AddFlag(uint8 _flag)
+{
+    m_dirty |= _flag;
+}
+
+void Transform::RemoveFlag(uint8 _flag)
+{
+    m_dirty &= ~_flag;
+}
+
+bool Transform::GetDirtyState(uint8 _flag) const
+{
+    return (m_dirty & _flag) == _flag;   
+}
+
+#pragma region TRANSLATION
+
+Vect3f32 const& Transform::GetPosition()
+{
+    return m_pos;
+}
+
+void Transform::SetPosition(Vect3f32 const& _position)
+{
+    m_pos = _position;
+    AddFlag(Position | Inverse);
+}
+
+void Transform::Move(Vect3f32 const& _delta)
+{
+    m_pos += _delta;
+    AddFlag(Position | Inverse);
+}
+
+void Transform::Move(Vect3f32 const& _dir, float _distance)
+{
+    m_pos += _dir * _distance;
+    AddFlag(Position | Inverse);
+}
+
+#pragma endregion
+
+#pragma region SCALE
+
+Vect3f32 const& Transform::GetScale()
+{
+    return m_scale;
+}
+
+void Transform::SetScale(Vect3f32 const& _scale)
+{
+    m_scale = _scale;
+    AddFlag(RotationScale | Inverse);
 }
 
 void Transform::SetScale(float _scale)
 {
-    XMStoreFloat3(&scale, XMVectorReplicate(_scale));
-    dirty |= (uint8)DIRTY_FLAG::SCALE;
+    m_scale = Vect3f32(_scale);
+    AddFlag(RotationScale | Inverse);
 }
 
-void Transform::Scale(XMFLOAT3 const& _scale)
+void Transform::Scale(Vect3f32 const& _scale)
 {
-    XMVECTOR s = XMVectorMultiply(XMLoadFloat3(&scale), XMLoadFloat3(&_scale));
-    XMStoreFloat3(&scale, s);
-    dirty |= (uint8)DIRTY_FLAG::SCALE;
+    m_scale *= _scale;
+    AddFlag(RotationScale | Inverse);
 }
 
 void Transform::Scale(float _scale)
 {
-    XMVECTOR s = XMVectorMultiply(XMLoadFloat3(&scale), XMVectorReplicate(_scale));
-    XMStoreFloat3(&scale, s);
-    dirty |= (uint8)DIRTY_FLAG::SCALE;
+    m_scale *= _scale;
+    AddFlag(RotationScale | Inverse);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-/// ROTATION ///
-///////////////////////////////////////////////////////////////////////////////////////
+#pragma endregion 
 
-static void ExtractAxesFromMatrix(const XMFLOAT4X4& m,
-                                  XMFLOAT3& right,
-                                  XMFLOAT3& up,
-                                  XMFLOAT3& forward)
+#pragma region ROTATION
+
+Quaternion const& Transform::GetRotation()
 {
-    right   = XMFLOAT3(m._11, m._12, m._13);
-    up      = XMFLOAT3(m._21, m._22, m._23);
-    forward = XMFLOAT3(m._31, m._32, m._33);
+    return m_quat;
 }
 
-void Transform::LookTo(XMFLOAT3 const& dir)
+Vect3f32 Transform::GetEulerAngles()
 {
-    XMVECTOR eye = XMLoadFloat3(&pos);
-    XMVECTOR to  = XMLoadFloat3(&dir);
-    XMVECTOR up  = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-    XMMATRIX view = XMMatrixLookToLH(eye, to, up);
-    XMMATRIX rot  = XMMatrixTranspose(view);
-    
-    rot.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-
-    XMStoreFloat4x4(&rotMatrix, rot);
-    UpdateRotationFromMatrix();
-
-    dirty |= (uint8)DIRTY_FLAG::ROTATE;
+    return m_quat.ToEulerAngles();
 }
 
-void Transform::LookAt(XMFLOAT3 const& target)
+Vect3f32 const& Transform::GetRight()
 {
-    XMVECTOR eye = XMLoadFloat3(&pos);
-    XMVECTOR to  = XMLoadFloat3(&target);
-    XMVECTOR up  = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    if ( GetDirtyState(RotationMatrix) == true )
+        UpdateRotationFromQuaternion();
 
-    XMMATRIX view = XMMatrixLookAtLH(eye, to, up);
-    XMMATRIX rot  = XMMatrixTranspose(view);
-    
-    rot.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-
-    XMStoreFloat4x4(&rotMatrix, rot);
-    UpdateRotationFromMatrix();
-
-    dirty |= (uint8)DIRTY_FLAG::ROTATE;
+    return m_rotMatrix.rows[0];
 }
 
-void Transform::SetRotationMatrix(XMFLOAT4X4 const& rotation)
+Vect3f32 const& Transform::GetUp()
 {
-    rotMatrix = rotation;
-    UpdateRotationFromMatrix();
+    if ( GetDirtyState(RotationMatrix) == true )
+        UpdateRotationFromQuaternion();
 
-    dirty |= (uint8)DIRTY_FLAG::ROTATE;
+    return m_rotMatrix.rows[1];
 }
 
-void Transform::SetRotationQuaternion(XMFLOAT4 const& _quat)
+Vect3f32 const& Transform::GetForward()
 {
-    quat = _quat;
-    UpdateRotationFromQuaternion();
+    if ( GetDirtyState(RotationMatrix) == true )
+        UpdateRotationFromQuaternion();
 
-    dirty |= (uint8)DIRTY_FLAG::ROTATE;
+    return m_rotMatrix.rows[2];
 }
 
-void Transform::ResetRotation()
+Mat3f32 const& Transform::GetRotMatrix()
 {
-    right   = XMFLOAT3(1.0f, 0.0f, 0.0f);
-    up      = XMFLOAT3(0.0f, 1.0f, 0.0f);
-    forward = XMFLOAT3(0.0f, 0.0f, 1.0f);
+    if ( GetDirtyState(RotationMatrix) == true )
+        UpdateRotationFromQuaternion();
 
-    XMStoreFloat4x4(&rotMatrix,  XMMatrixIdentity());
-    XMStoreFloat4  (&quat, XMQuaternionIdentity());
-
-    dirty |= (uint8)DIRTY_FLAG::ROTATE;
+    return m_rotMatrix;
 }
 
-void Transform::SetYPR(XMFLOAT3 const& ypr)
+void Transform::SetRotationMatrix(Mat3f32 const& _rotation)
 {
-    ResetRotation();
-    AddYPR(ypr);
+    m_rotMatrix = _rotation;
+    m_quat = m_rotMatrix.ToQuaternion();
+
+    AddFlag(RotationScale | Inverse);
 }
 
-void Transform::AddYPR(const XMFLOAT3& ypr)
+void Transform::SetRotationQuaternion(Quaternion const& _quat)
 {
-    XMVECTOR qRot = XMLoadFloat4(&quat);
+    m_quat = _quat;
 
-    if (ypr.x != 0.0f) // yaw (Y world axis)
-    {
-        XMVECTOR qYaw = XMQuaternionRotationAxis(XMVectorSet(0,1,0,0), ypr.x);
-        qRot = XMQuaternionMultiply(qRot, qYaw);
-    }
-
-    if (ypr.y != 0.0f) // pitch (local X axis)
-    {
-        XMVECTOR right  = XMVector3Rotate(XMVectorSet(1,0,0,0), qRot);
-        XMVECTOR qPitch = XMQuaternionRotationAxis(right, ypr.y);
-        qRot = XMQuaternionMultiply(qRot, qPitch);
-    }
-
-    if (ypr.z != 0.0f) // roll (local Z axis)
-    {
-        XMVECTOR qRoll = XMQuaternionRotationAxis(XMVectorSet(0,0,1,0), ypr.z);
-        qRot = XMQuaternionMultiply(qRot, qRoll);
-    }
-
-    qRot = XMQuaternionNormalize(qRot);
-    XMStoreFloat4(&quat, qRot);
-
-    UpdateRotationFromQuaternion();
+    AddFlag(RotationMatrix | RotationScale | Inverse);
 }
 
-void Transform::UpdateRotationFromAxes()
+void Transform::SetYPR(Vect3f32 const& _ypr)
 {
-    rotMatrix._11 = right.x;   rotMatrix._12 = right.y;   rotMatrix._13 = right.z;
-    rotMatrix._21 = up.x;      rotMatrix._22 = up.y;      rotMatrix._23 = up.z;
-    rotMatrix._31 = forward.x; rotMatrix._32 = forward.y; rotMatrix._33 = forward.z;
-    rotMatrix._14 = 0.0f; rotMatrix._24 = 0.0f; rotMatrix._34 = 0.0f;
-    rotMatrix._41 = 0.0f; rotMatrix._42 = 0.0f; rotMatrix._43 = 0.0f; rotMatrix._44 = 1.0f;
+    m_quat = Quaternion::MakeYPR(_ypr.x, _ypr.y, _ypr.z);
 
-    XMStoreFloat4(&quat, XMQuaternionRotationMatrix(XMLoadFloat4x4(&rotMatrix)));
+    AddFlag(RotationMatrix | RotationScale | Inverse);
+}
 
-    dirty |= (uint8)DIRTY_FLAG::ROTATE;
+void Transform::AddYPR(Vect3f32 const& _ypr)
+{
+    m_quat *= Quaternion::MakeYPR(_ypr.x, _ypr.y, _ypr.z);
+    AddFlag(RotationMatrix | RotationScale | Inverse);
 }
 
 void Transform::UpdateRotationFromQuaternion()
 {
-    XMStoreFloat4x4(&rotMatrix, XMMatrixRotationQuaternion(XMLoadFloat4(&quat)));
-    ExtractAxesFromMatrix(rotMatrix, right, up, forward);
-    dirty |= (uint8)DIRTY_FLAG::ROTATE;
+    m_rotMatrix = m_quat.ToMatrix3();
+    RemoveFlag(RotationMatrix);
 }
 
-void Transform::UpdateRotationFromMatrix()
+void Transform::ResetRotation()
 {
-    XMVECTOR rotQuat = XMQuaternionRotationMatrix(XMLoadFloat4x4(&rotMatrix));
-    XMStoreFloat4(&quat, rotQuat);
+    m_quat = Quaternion();
 
-    ExtractAxesFromMatrix(rotMatrix, right, up, forward);
-
-    dirty |= (uint8)DIRTY_FLAG::ROTATE;
+    m_rotMatrix = Mat3f32::Identity();
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
+#pragma endregion
 
-#endif
+void Transform::LookAt(Vect3f32 const& _target, Vect3f32 const& _up)
+{
+    Vect3f32 up = _up;
+    Vect3f32 forward = (_target - m_pos).Normalized();
+    
+    if (MathUtils::Abs(Vect3f32::Dot(forward, _up)) > 1.0f - MathUtils::EPSILON)
+        up = Vect3f32(0.0f, 0.0f, 1.0f);
+    
+    Vect3f32 right = (up ^ forward).Normalized();
+    up = forward ^ right;
+    
+    m_rotMatrix.rows[0] = right;
+    m_rotMatrix.rows[1] = up;
+    m_rotMatrix.rows[2] = forward;
+    m_quat = m_rotMatrix.ToQuaternion();
+    
+    RemoveFlag(RotationMatrix);
+    AddFlag(RotationScale | Inverse);
+}
+
+void Transform::LookTo(Vect3f32 const& _dir, Vect3f32 const& _up)
+{
+    Vect3f32 up = _up;
+    Vect3f32 forward = _dir.Normalized();
+    
+    if (MathUtils::Abs(Vect3f32::Dot(forward, _up)) > 1.0f - MathUtils::EPSILON)
+        up = Vect3f32(0.0f, 0.0f, 1.0f);
+    
+    Vect3f32 right = (up ^ forward).Normalized();
+    up = forward ^ right;
+    
+    m_rotMatrix.rows[0] = right;
+    m_rotMatrix.rows[1] = up;
+    m_rotMatrix.rows[2] = forward;
+    m_quat = m_rotMatrix.ToQuaternion();
+    
+    RemoveFlag(RotationMatrix);
+    AddFlag(RotationScale | Inverse);
+}

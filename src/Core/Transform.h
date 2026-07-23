@@ -1,100 +1,104 @@
 #ifndef TRANSFORM_H_DEFINED
 #define TRANSFORM_H_DEFINED
 
-#include <DirectXMath.h>
-#include <type_traits>
-using namespace DirectX;
-
 #include "define.h"
 
-enum class DIRTY_FLAG : uint32
-{
-    WORLD =       0b00001,
-    INVERSE =     0b00010,
-    POS =         0b00100,
-    SCALE =       0b01000,
-    ROTATE =      0b10000,
-
-    ALL =         0b11111
-};
+#include "Math/Matrix/Matrix.h"
+#include "Math/Vector/Vector.h"
+#include "Math/Quaternions/Quaternion.h"
 
 class Transform
 {
 public:
+    enum LocalDirty : uint8
+    {
+        None            = 0,
+        Position        = 1 << 0,
+        RotationScale   = 1 << 1,
+        RotationMatrix  = 1 << 2,
+        Inverse         = 1 << 3,
+        World           = Position | RotationScale,
+        All             = World | Inverse | RotationMatrix
+    };
+    
     Transform();
     ~Transform() = default;
 
-    Transform(const Transform& other);
-    Transform(Transform&& other) noexcept;
-    Transform& operator=(const Transform& other);
-    Transform& operator=(Transform&& other) noexcept;
+    Transform(Transform const& _o);
+    Transform(Transform&& _o) noexcept;
+    Transform& operator=(Transform const& _o);
+    Transform& operator=(Transform&& _o) noexcept;
     
-    XMFLOAT4X4& GetMatrix();
-    XMFLOAT4X4& GetInvMatrix();
-
     void SetIdentity();
+    
     void UpdateMatrix();
     void UpdateInvMatrix();
-    void UpdateFromParent(Transform const& parent);
+    
+    bool IsWorldDirty()     const;
+    bool IsInverseDirty()   const;
+    
+    Mat4f32 const& GetMatrix();
+    Mat4f32 const& GetInvMatrix();
+    
+    Mat4f32 UpdateFromParent(Mat4f32 const& _p);
+    
+    //////////////////// Pos //////////////////////////
+    
+    Vect3f32 const& GetPosition();
+    
+    void SetPosition(Vect3f32 const& _position);
+    void Move(Vect3f32 const& _delta);
+    void Move(Vect3f32 const& _dir, float _distance);
 
-    uint32 GetDirty() { return dirty; }
-    
-    // Pos
-    
-    XMFLOAT3& GetPosition() { return pos; };
-    
-    void SetPosition(XMFLOAT3 const& position);
-    void Move(XMFLOAT3 const& delta);
-    void Move(XMFLOAT3 const& dir, float distance);
-
-    // Scale
+    ////////////////////// Scale //////////////////////
    
-    const XMFLOAT3& GetScale() { return scale; };
+    Vect3f32 const& GetScale();
     
-    void SetScale(XMFLOAT3 const& scale);
-    void SetScale(float scale);
-    void Scale(XMFLOAT3 const& scale);
-    void Scale(float scale);
+    void SetScale(Vect3f32 const& _scale);
+    void SetScale(float _scale);
+    void Scale(Vect3f32 const& _scale);
+    void Scale(float _scale);
 
-    // Rotate
+    ///////////////////// Rotation /////////////////////
 
-    const XMFLOAT3& GetForward()    { return forward; }
-    const XMFLOAT3& GetRight()      { return right; }
-    const XMFLOAT3& GetUp()         { return up; }
-
-    XMFLOAT4& GetRotation()   { return quat; }
-
-    XMMATRIX GetRotMatrix()   { return XMLoadFloat4x4(&rotMatrix); }
-
-    void LookAt(XMFLOAT3 const& target);
-    void LookTo(XMFLOAT3 const& dir);
+    Quaternion const& GetRotation();
+    Vect3f32 GetEulerAngles();
     
-    void SetRotationMatrix(XMFLOAT4X4 const& rotation);
-    void SetRotationQuaternion(XMFLOAT4 const& quat);
-    
-    void ResetRotation();
-    
-    void SetYPR(XMFLOAT3 const& ypr);
-    void AddYPR(XMFLOAT3 const& ypr);
+    Vect3f32 const& GetRight();
+    Vect3f32 const& GetUp();
+    Vect3f32 const& GetForward();
 
-    void UpdateRotationFromAxes();
+    Mat3f32 const& GetRotMatrix();
+
+    void SetRotationMatrix(Mat3f32 const& _rotation);
+    void SetRotationQuaternion(Quaternion const& _quat);
+
+    void SetYPR(Vect3f32 const& _ypr);
+    void AddYPR(Vect3f32 const& _ypr);
+    
     void UpdateRotationFromQuaternion();
-    void UpdateRotationFromMatrix();
+    void ResetRotation();
+
+    ///////////////// Other ////////////////////////////
     
-    XMFLOAT3 pos   = { 0.0f, 0.0f, 0.0f };
-    XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f };
+    void LookAt(Vect3f32 const& _target, Vect3f32 const& _up = Vect3f32(0.0f, 1.0f, 0.0f));
+    void LookTo(Vect3f32 const& _dir, Vect3f32 const& _up = Vect3f32(0.0f, 1.0f, 0.0f));
 
-    XMFLOAT3 forward;
-    XMFLOAT3 up;
-    XMFLOAT3 right;
+private:
+    Vect3f32 m_pos;
+    Vect3f32 m_scale;
 
-    XMFLOAT4 quat = { 0.0f, 0.0f, 0.0f, 1.0f };
-    XMFLOAT4X4 rotMatrix;
+    Quaternion m_quat;
+    Mat3f32 m_rotMatrix;
     
-    XMFLOAT4X4 matrix;
-    XMFLOAT4X4 invMatrix;
+    Mat4f32 m_matrix;
+    Mat4f32 m_invMatrix;
 
-    uint32 dirty = 0;
+    uint8 m_dirty;
+
+    void AddFlag(uint8 _flag);
+    void RemoveFlag(uint8 _flag);
+    bool GetDirtyState(uint8 _flag) const;
 };
 
 #endif
