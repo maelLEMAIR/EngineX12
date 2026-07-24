@@ -141,31 +141,79 @@ bool AABB::Intersects(Plane const& _plane) const
     return _plane.Intersects(*this);
 }
 
-bool AABB::Intersects(AABB const& _o) const
+bool AABB::Intersects(AABB const& _o, Manifold* _manifold) const
 {
     Vect3f32 c = Center();
     Vect3f32 oC = _o.Center();
-    
-    Vect3f32 d = Vect3f32::Abs(c - oC);
-    
+
+    Vect3f32 d = oC - c;
+
     Vect3f32 extent = Extent();
     Vect3f32 oExtent = _o.Extent();
-    
-    bool validX = d.x <= extent.x + oExtent.x;
-    bool validY = d.y <= extent.y + oExtent.y;
-    bool validZ = d.z <= extent.z + oExtent.z;
-    
-    return validX && validY && validZ;
+
+    float overlap[3];
+    for (int i = 0; i < 3; i++)
+    {
+        overlap[i] = (extent[i] + oExtent[i]) - MathUtils::Abs(d[i]);
+
+        if (overlap[i] <= 0.0f)
+            return false;
+    }
+
+    if (_manifold != nullptr)
+    {
+        int axis = 0;
+        if (overlap[1] < overlap[axis]) axis = 1;
+        if (overlap[2] < overlap[axis]) axis = 2;
+
+        float sign = (d[axis] < 0.0f) ? -1.0f : 1.0f;
+
+        Vect3f32 normal(0.0f, 0.0f, 0.0f);
+        normal[axis] = sign;
+
+        Vect3f32 contact;
+        for (int i = 0; i < 3; i++)
+        {
+            if (i == axis)
+            {
+                float faceThis = c[i] + sign * extent[i];
+                float faceOther = oC[i] - sign * oExtent[i];
+                contact[i] = (faceThis + faceOther) * 0.5f;
+            }
+            else
+            {
+                float lo = MathUtils::Max(min[i], _o.min[i]);
+                float hi = MathUtils::Min(max[i], _o.max[i]);
+                contact[i] = (lo + hi) * 0.5f;
+            }
+        }
+
+        _manifold->normal = normal;
+        _manifold->contact = contact;
+        _manifold->penetration = overlap[axis];
+    }
+
+    return true;
 }
 
-bool AABB::Intersects(Sphere const& _o) const
+bool AABB::Intersects(Sphere const& _o, Manifold* _manifold) const
 {
-    return _o.Intersects(*this);
+    bool hit = _o.Intersects(*this, _manifold);
+
+    if (hit && _manifold != nullptr)
+        _manifold->normal = -_manifold->normal;
+
+    return hit;
 }
 
-bool AABB::Intersects(OBB const& _o) const
+bool AABB::Intersects(OBB const& _o, Manifold* _manifold) const
 {
-    return _o.Intersects(*this);
+    bool hit = _o.Intersects(*this, _manifold);
+
+    if (hit && _manifold != nullptr)
+        _manifold->normal = -_manifold->normal;
+
+    return hit;
 }
 
 AABB AABB::Merge(AABB const& _a, AABB const& _b)

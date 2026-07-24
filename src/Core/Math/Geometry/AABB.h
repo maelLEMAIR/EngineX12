@@ -3,6 +3,7 @@
 
 #include "../Vector/Vector.h"
 #include "../Matrix/Matrix.h"
+#include "Manifold.hpp"
 
 class Ray;
 class Plane;
@@ -37,11 +38,11 @@ public:
     
     bool Contains(Vect3f32 const& _p)               const;
     bool Contains(AABB const& _o)                   const;
-    bool Intersects(Ray const& _r, Vect3f32* _p)    const;
-    bool Intersects(Plane const& _plane)            const;
-    bool Intersects(AABB const& _o)                 const;
-    bool Intersects(Sphere const& _o)               const;
-    bool Intersects(OBB const& _o)                  const;
+    bool Intersects(Ray const& _r, Vect3f32* _p)                    const;
+    bool Intersects(Plane const& _plane)                            const;
+    bool Intersects(AABB const& _o, Manifold* _manifold = nullptr)  const;
+    bool Intersects(Sphere const& _o, Manifold* _manifold = nullptr) const;
+    bool Intersects(OBB const& _o, Manifold* _manifold = nullptr)   const;
     
     static AABB Merge(AABB const& _a, AABB const& _b);
     static AABB Union(AABB const& _a, AABB const& _b);

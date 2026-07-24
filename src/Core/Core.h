@@ -16,6 +16,7 @@
 #include "Math/Geometry/Ray.h"
 #include "Math/Geometry/Sphere.h"
 #include "Math/Geometry/OBB.h"
+#include "Math/Geometry/Manifold.hpp"
 
 #include "Math/Matrix/Matrix.h" 
 #include "Math/Quaternions/Quaternion.h"

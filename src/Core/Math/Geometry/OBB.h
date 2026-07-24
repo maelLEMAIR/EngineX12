@@ -3,6 +3,7 @@
 
 #include "../Vector/Vector.h"
 #include "../Matrix/Matrix.h"
+#include "Manifold.hpp"
 
 class Ray;
 class Plane;
@@ -30,17 +31,14 @@ public:
     OBB Transformed(Mat4f32 const& _t) const;
     
     bool Contains(Vect3f32 const& _pos)             const;
-    bool Intersects(Ray const& _r, Vect3f32* _p)    const;
-    bool Intersects(Plane const& _plane)            const;
-    bool Intersects(AABB const& _a)                 const;
-    bool Intersects(Sphere const& _s)               const;
-    bool Intersects(OBB const& _o)                  const;
+    bool Intersects(Ray const& _r, Vect3f32* _p)                    const;
+    bool Intersects(Plane const& _plane)                            const;
+    bool Intersects(AABB const& _a, Manifold* _manifold = nullptr)  const;
+    bool Intersects(Sphere const& _s, Manifold* _manifold = nullptr) const;
+    bool Intersects(OBB const& _o, Manifold* _manifold = nullptr)   const;
     
     static OBB Expand(OBB const& _o, float _scalar);
     static OBB Transform(OBB const& _o, Mat4f32 const& _t);
-    
-private:
-    bool IsSeparate(Vect3f32 const& _axis, OBB const& _a, OBB const& _b) const;
 };
 
 #endif

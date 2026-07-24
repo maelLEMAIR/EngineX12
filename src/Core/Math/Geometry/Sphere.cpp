@@ -87,27 +87,97 @@ bool Sphere::Intersects(Plane const& _plane) const
     return _plane.Intersects(*this);
 }
 
-bool Sphere::Intersects(AABB const& _a) const
+bool Sphere::Intersects(AABB const& _a, Manifold* _manifold) const
 {
     Vect3f32 closest;
     closest.x = MathUtils::Clamp(center.x, _a.min.x, _a.max.x);
     closest.y = MathUtils::Clamp(center.y, _a.min.y, _a.max.y);
     closest.z = MathUtils::Clamp(center.z, _a.min.z, _a.max.z);
 
+    bool inside = (closest == center);
     Vect3f32 diff = closest - center;
-    return diff.LengthSquared() <= radius * radius;
+    float distSq = diff.LengthSquared();
+
+    if (!inside && distSq > radius * radius)
+        return false;
+
+    if (_manifold != nullptr)
+    {
+        Vect3f32 normal;
+        Vect3f32 contact;
+        float penetration;
+
+        if (inside)
+        {
+            float dist[6] =
+            {
+                center.x - _a.min.x, _a.max.x - center.x,
+                center.y - _a.min.y, _a.max.y - center.y,
+                center.z - _a.min.z, _a.max.z - center.z
+            };
+
+            int best = 0;
+            for (int i = 1; i < 6; i++)
+                if (dist[i] < dist[best])
+                    best = i;
+
+            int axis = best / 2;
+            float sign = (best % 2 == 0) ? 1.0f : -1.0f; // face min -> normal +axis, face max -> normal -axis
+
+            normal = Vect3f32(0.0f, 0.0f, 0.0f);
+            normal[axis] = sign;
+
+            contact = center;
+            contact[axis] = (best % 2 == 0) ? _a.min[axis] : _a.max[axis];
+
+            penetration = radius + dist[best];
+        }
+        else
+        {
+            float dist = MathUtils::Sqrt(distSq);
+            normal = (dist > MathUtils::EPSILON) ? diff / dist : Vect3f32(0.0f, 1.0f, 0.0f);
+            contact = closest;
+            penetration = radius - dist;
+        }
+
+        _manifold->normal = normal;
+        _manifold->contact = contact;
+        _manifold->penetration = penetration;
+    }
+
+    return true;
 }
 
-bool Sphere::Intersects(Sphere const& _o) const
+bool Sphere::Intersects(Sphere const& _o, Manifold* _manifold) const
 {
-    float dist = (center - _o.center).LengthSquared();
+    Vect3f32 diff = _o.center - center;
+    float distSq = diff.LengthSquared();
+    float radiusSum = radius + _o.radius;
 
-    return dist <= (radius + _o.radius) * (radius * _o.radius);
+    if (distSq > radiusSum * radiusSum)
+        return false;
+
+    if (_manifold != nullptr)
+    {
+        float dist = MathUtils::Sqrt(distSq);
+        Vect3f32 normal = (dist > MathUtils::EPSILON) ? diff / dist : Vect3f32(0.0f, 1.0f, 0.0f);
+
+        _manifold->normal = normal;
+        _manifold->contact = center + normal * radius;
+        _manifold->penetration = radiusSum - dist;
+    }
+
+    return true;
 }
 
-bool Sphere::Intersects(OBB const& _o) const
+bool Sphere::Intersects(OBB const& _o, Manifold* _manifold) const
 {
-    return _o.Intersects(*this);
+    bool hit = _o.Intersects(*this, _manifold);
+
+    if (hit && _manifold != nullptr)
+        _manifold->normal = -_manifold->normal;
+
+    return hit;
 }
 
 Sphere Sphere::Merge(Sphere const& _sphere, Sphere const& _o)
