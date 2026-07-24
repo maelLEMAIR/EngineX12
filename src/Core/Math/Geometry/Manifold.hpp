@@ -4,6 +4,7 @@
 #include "../Vector/Vector.h"
 struct Manifold
 {
+	// La normale pointe de l'objet origine (this) vers l'autre objet (other / _o)
 	Vect3f32 normal = Vect3f32(0.0f, 0.0f, 0.0f);
 	Vect3f32 contact = Vect3f32(0.0f, 0.0f, 0.0f);
 	float penetration = 0.0f;

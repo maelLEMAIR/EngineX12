@@ -215,20 +215,3 @@ Sphere Sphere::Transform(Sphere const& _sphere, Mat4f32 const& _t)
     float nRadius = _sphere.radius * (scale.x + scale.y + scale.z) / 3.0f; 
     return Sphere(nCenter, nRadius);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

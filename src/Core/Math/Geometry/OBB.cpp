@@ -473,15 +473,3 @@ OBB OBB::Transform(OBB const& _o, Mat4f32 const& _t)
     res.extent *= 0.5f;
     return res;
 }
-
-
-
-
-
-
-
-
-
-
-
-
