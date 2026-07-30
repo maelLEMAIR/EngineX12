@@ -6,5 +6,6 @@
 #include "Tests/TestWorld.hpp"
 #include "Tests/TestEngineManager.hpp"
 #include "Tests/TestScript.hpp"
+#include "Tests/TestPhysicWorld.hpp"
 
 #endif

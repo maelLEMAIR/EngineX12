@@ -16,11 +16,14 @@
 #include "Components/TransformComponent.hpp"
 #include "Components/CameraComponent.hpp"
 #include "Components/LightComponent.hpp"
+#include "Components/ColliderComponent.hpp"
+#include "Components/RigidBodyComponent.hpp"
 
 // ------------ SYSTEMS -------------
 #include "Systems/MeshRendererSystem.h"
 #include "Systems/TransformSystem.h"
 #include "Systems/LightSystem.h"
 #include "Systems/ScriptSystem.h"
+#include "Systems/PhysicsSystem.h"
 
 #endif

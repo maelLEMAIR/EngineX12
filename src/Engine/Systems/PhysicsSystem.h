@@ -19,12 +19,13 @@ public:
 
     void SetGravity(Vect3f32 const& _gravity);
 
+    bool AddToPhysicWorld(World& world, EntityId _entity);
+
     void ApplyForce(EntityId _entity, Vect3f32 const& _force);
     void ApplyImpulse(EntityId _entity, Vect3f32 const& _impulse);
     void SetLinearVelocity(EntityId _entity, Vect3f32 const& _velocity);
 
 private:
-    void CreateBodyIfNeeded(EntityId _id, RigidBodyComponent& _rb, ColliderComponent& _collider, TransformComponent& _transform);
     void DestroyBodyFor(EntityId _id);
 
     Collider MakeCollider(ColliderComponent const& _c) const;

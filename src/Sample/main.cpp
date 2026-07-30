@@ -6,8 +6,7 @@
 #pragma comment(lib, "shell32.lib")
 
 #include "Core/Console.h"
-#include "Tests/TestEngineManager.hpp"
-#include "Tests/TestNetwork.hpp"
+#include "Tests.h"
 
 static std::string WStringToString(const std::wstring& wstr)
 {
@@ -34,7 +33,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     LocalFree(argvW);
 
     //TestNetwork::Run(argc, argv.data());
-    TestEngineManager::Run();
+    //TestEngineManager::Run();
+    TestPhysicWorld::Run();
 
     EngineManager::GetInstance().Run();
     Console::DeleteConsol();

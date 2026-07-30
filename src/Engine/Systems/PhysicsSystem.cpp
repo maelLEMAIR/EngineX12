@@ -32,13 +32,6 @@ void PhysicsSystem::OnUnregister(World& world)
 
 void PhysicsSystem::Update(World& world, float deltaTime)
 {
-    world.QueryWithEntity<RigidBodyComponent, ColliderComponent, TransformComponent>(
-        [&](EntityId id, RigidBodyComponent& rb, ColliderComponent& collider, TransformComponent& transform)
-        {
-            CreateBodyIfNeeded(id, rb, collider, transform);
-        }
-    );
-
     Vector<PhysicsWorld::BodySnapshot> snapshot;
     m_physicsWorld.GetSnapshot(snapshot);
 
@@ -54,6 +47,37 @@ void PhysicsSystem::Update(World& world, float deltaTime)
 
         transform->local.SetPosition(ToXM(body.position));
     }
+}
+
+bool PhysicsSystem::AddToPhysicWorld(World& world, EntityId _entity)
+{
+    RigidBodyComponent* rb        = world.GetComponent<RigidBodyComponent>(_entity);
+    ColliderComponent*  collider  = world.GetComponent<ColliderComponent>(_entity);
+    TransformComponent* transform = world.GetComponent<TransformComponent>(_entity);
+
+    if (rb == nullptr || collider == nullptr || transform == nullptr)
+        return false;
+
+    if (rb->handle.IsValid() == false)
+        return false;
+
+    RigidBody desc;
+    desc.position = ToVect3(transform->world.pos);
+    desc.linearVelocity = rb->initialVelocity;
+    desc.invMass = rb->isStatic ? 0.0f : rb->invMass;
+    desc.restitution = rb->restitution;
+    desc.friction = rb->friction;
+    desc.gravityScale = rb->gravityScale;
+    desc.isStatic = rb->isStatic;
+    desc.collider = MakeCollider(*collider);
+
+    PhysicsWorld::BodyHandle handle = m_physicsWorld.CreateBody(desc);
+
+    rb->handle = handle;
+    m_entityToBody[_entity] = handle;
+    m_bodyToEntity[handle.index] = _entity;
+
+    return true;
 }
 
 void PhysicsSystem::SetGravity(Vect3f32 const& _gravity)
@@ -80,28 +104,6 @@ void PhysicsSystem::SetLinearVelocity(EntityId _entity, Vect3f32 const& _velocit
     auto it = m_entityToBody.find(_entity);
     if (it != m_entityToBody.end())
         m_physicsWorld.SetLinearVelocity(it->second, _velocity);
-}
-
-void PhysicsSystem::CreateBodyIfNeeded(EntityId _id, RigidBodyComponent& _rb, ColliderComponent& _collider, TransformComponent& _transform)
-{
-    if (_rb.handle.IsValid())
-        return;
-
-    RigidBody desc;
-    desc.position        = ToVect3(_transform.world.pos);
-    desc.linearVelocity  = _rb.initialVelocity;
-    desc.invMass         = _rb.isStatic ? 0.0f : _rb.invMass;
-    desc.restitution     = _rb.restitution;
-    desc.friction        = _rb.friction;
-    desc.gravityScale    = _rb.gravityScale;
-    desc.isStatic        = _rb.isStatic;
-    desc.collider        = MakeCollider(_collider);
-
-    PhysicsWorld::BodyHandle handle = m_physicsWorld.CreateBody(desc);
-
-    _rb.handle = handle;
-    m_entityToBody[_id] = handle;
-    m_bodyToEntity[handle.index] = _id;
 }
 
 void PhysicsSystem::DestroyBodyFor(EntityId _id)
