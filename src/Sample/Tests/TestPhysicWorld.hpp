@@ -49,7 +49,7 @@ class TestPhysicWorldScene : public Scene
 		ColliderComponent* cubeC = &world.AddComponent<ColliderComponent>(cubeEntity);
 		cubeC->shape = ColliderShape::AABB;
         RigidBodyComponent* cubeRB = &world.AddComponent<RigidBodyComponent>(cubeEntity);
-		cubeRB->gravityScale = 0.01f;
+		cubeRB->gravityScale = 0.1f;
 
 		world.GetSystem<PhysicsSystem>()->AddToPhysicWorld(world, floorEntity);
 		world.GetSystem<PhysicsSystem>()->AddToPhysicWorld(world, cubeEntity);

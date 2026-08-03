@@ -4,11 +4,16 @@
 template<typename T>
 ComponentId ComponentRegister::GetComponentId()
 {
-    static ComponentId id = m_nextId++;
+    std::type_index idx(typeid(T));
 
-    if (m_sizes.count(id) == 0)
-        m_sizes[id] = sizeof(T);
-    
+    auto it = m_typeToId.find(idx);
+    if (it != m_typeToId.end())
+        return it->second;
+
+    ComponentId id = m_nextId++;
+    m_typeToId[idx] = id;
+    m_sizes[id] = sizeof(T);
+
     return id;
 }
 

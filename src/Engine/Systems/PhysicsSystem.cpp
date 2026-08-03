@@ -58,8 +58,8 @@ bool PhysicsSystem::AddToPhysicWorld(World& world, EntityId _entity)
     if (rb == nullptr || collider == nullptr || transform == nullptr)
         return false;
 
-    if (rb->handle.IsValid() == false)
-        return false;
+    if (rb->handle.IsValid())
+        return true;
 
     RigidBody desc;
     desc.position = ToVect3(transform->world.pos);
