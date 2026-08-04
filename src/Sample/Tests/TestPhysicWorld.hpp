@@ -45,14 +45,25 @@ class TestPhysicWorldScene : public Scene
 		cubeR.materialId = RessourceManager::GetMaterialId("Default");
 		TransformComponent* cubeT = &world.AddComponent<TransformComponent>(cubeEntity);
 		cubeT->local.SetScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
-		cubeT->local.SetPosition(XMFLOAT3(0.0f, 5.0f, 5.0f));
+		cubeT->local.SetPosition(XMFLOAT3(0.0f, 5.0f, 0.0f));
 		ColliderComponent* cubeC = &world.AddComponent<ColliderComponent>(cubeEntity);
 		cubeC->shape = ColliderShape::AABB;
         RigidBodyComponent* cubeRB = &world.AddComponent<RigidBodyComponent>(cubeEntity);
-		cubeRB->gravityScale = 0.1f;
+
+		//EntityId cubeEntity2 = world.CreateEntity();
+		//MeshRenderer& cubeR2 = world.AddComponent<MeshRenderer>(cubeEntity2);
+		//cubeR2.geoId = RessourceManager::GetGeometryId("Cube");
+		//cubeR2.materialId = RessourceManager::GetMaterialId("Default");
+		//TransformComponent* cubeT2 = &world.AddComponent<TransformComponent>(cubeEntity2);
+		//cubeT2->local.SetScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
+		//cubeT2->local.SetPosition(XMFLOAT3(0.0f, 10.0f, 0.0f));
+		//ColliderComponent* cubeC2 = &world.AddComponent<ColliderComponent>(cubeEntity2);
+		//cubeC2->shape = ColliderShape::AABB;
+		//RigidBodyComponent* cubeRB2 = &world.AddComponent<RigidBodyComponent>(cubeEntity2);
 
 		world.GetSystem<PhysicsSystem>()->AddToPhysicWorld(world, floorEntity);
 		world.GetSystem<PhysicsSystem>()->AddToPhysicWorld(world, cubeEntity);
+		//world.GetSystem<PhysicsSystem>()->AddToPhysicWorld(world, cubeEntity2);
 
         camera = world.CreateEntity();
         TransformComponent* camT = &world.AddComponent<TransformComponent>(camera);
@@ -85,6 +96,13 @@ class TestPhysicWorldScene : public Scene
             camT->local.Move(camT->local.forward, 50.0f * _dt);
         if (InputManager::IsKeyPressed(S))
             camT->local.Move(camT->local.forward, -50.0f * _dt);
+
+		RigidBodyComponent* cubeRB = world.GetComponent<RigidBodyComponent>(cubeEntity);
+		if (InputManager::IsKeyPressed(SPACE))
+		{
+			cubeRB->initialVelocity = Vect3f32(0.0f, 10.0f, 0.0f);
+			cubeRB->SetLinearVelocity(cubeRB->initialVelocity);
+		}
     }
 };
 

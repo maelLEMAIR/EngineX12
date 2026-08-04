@@ -61,6 +61,8 @@ bool PhysicsSystem::AddToPhysicWorld(World& world, EntityId _entity)
     if (rb->handle.IsValid())
         return true;
 
+    world.GetSystem<TransformSystem>()->Sync(world, _entity);
+
     RigidBody desc;
     desc.position = ToVect3(transform->world.pos);
     desc.linearVelocity = rb->initialVelocity;
@@ -74,6 +76,7 @@ bool PhysicsSystem::AddToPhysicWorld(World& world, EntityId _entity)
     PhysicsWorld::BodyHandle handle = m_physicsWorld.CreateBody(desc);
 
     rb->handle = handle;
+    rb->m_pWorld = &m_physicsWorld;
     m_entityToBody[_entity] = handle;
     m_bodyToEntity[handle.index] = _entity;
 
@@ -83,27 +86,6 @@ bool PhysicsSystem::AddToPhysicWorld(World& world, EntityId _entity)
 void PhysicsSystem::SetGravity(Vect3f32 const& _gravity)
 {
     m_physicsWorld.SetGravity(_gravity);
-}
-
-void PhysicsSystem::ApplyForce(EntityId _entity, Vect3f32 const& _force)
-{
-    auto it = m_entityToBody.find(_entity);
-    if (it != m_entityToBody.end())
-        m_physicsWorld.ApplyForce(it->second, _force);
-}
-
-void PhysicsSystem::ApplyImpulse(EntityId _entity, Vect3f32 const& _impulse)
-{
-    auto it = m_entityToBody.find(_entity);
-    if (it != m_entityToBody.end())
-        m_physicsWorld.ApplyImpulse(it->second, _impulse);
-}
-
-void PhysicsSystem::SetLinearVelocity(EntityId _entity, Vect3f32 const& _velocity)
-{
-    auto it = m_entityToBody.find(_entity);
-    if (it != m_entityToBody.end())
-        m_physicsWorld.SetLinearVelocity(it->second, _velocity);
 }
 
 void PhysicsSystem::DestroyBodyFor(EntityId _id)

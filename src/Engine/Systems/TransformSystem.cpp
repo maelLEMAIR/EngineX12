@@ -9,6 +9,15 @@ void TransformSystem::Update(World& world, float deltaTime)
     });
 }
 
+void TransformSystem::Sync(World& world, EntityId _entity)
+{
+    TransformComponent* t = world.GetComponent<TransformComponent>(_entity);
+    if (t == nullptr)
+        return;
+
+    UpdateMatrix(*t, _entity);
+}
+
 bool TransformSystem::IsDirty(TransformD3D& _transform, uint32 _flag)
 {
     uint32 dirty = _transform.GetDirty();

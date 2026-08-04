@@ -5,6 +5,7 @@
 #include "../Components/RigidBodyComponent.hpp"
 #include "../Components/ColliderComponent.hpp"
 #include "../Components/TransformComponent.hpp"
+#include "TransformSystem.h"
 #include "../../Core/Physics/PhysicsWorld.h"
 
 // Lien ECS <-> PhysicsWorld. Le PhysicsWorld tourne sur son propre thread ;
@@ -20,10 +21,6 @@ public:
     void SetGravity(Vect3f32 const& _gravity);
 
     bool AddToPhysicWorld(World& world, EntityId _entity);
-
-    void ApplyForce(EntityId _entity, Vect3f32 const& _force);
-    void ApplyImpulse(EntityId _entity, Vect3f32 const& _impulse);
-    void SetLinearVelocity(EntityId _entity, Vect3f32 const& _velocity);
 
 private:
     void DestroyBodyFor(EntityId _id);

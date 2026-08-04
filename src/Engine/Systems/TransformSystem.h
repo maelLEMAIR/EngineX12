@@ -9,6 +9,8 @@ class TransformSystem : public System
 public:
     void Update(World& world, float deltaTime) override;
 
+    void Sync(World& world, EntityId _entity);
+
 private:
     bool IsDirty(TransformD3D& _transform, uint32 _flag);
     void UpdateMatrix(TransformComponent& _t, EntityId _e);
