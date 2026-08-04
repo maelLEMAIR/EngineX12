@@ -15,6 +15,7 @@ struct RigidBody
     float restitution   = 0.2f;
     float friction      = 0.5f;
     float gravityScale  = 1.0f;
+    float maxFallSpeed  = 0.0f; // vitesse max le long de la gravité, 0 = illimité
     bool  isStatic      = false;
 
     Collider collider;

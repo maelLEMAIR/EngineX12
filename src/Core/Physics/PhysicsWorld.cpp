@@ -73,6 +73,15 @@ void PhysicsWorld::Step(float _dt)
 
         Vect3f32 acceleration = m_gravity * body.gravityScale + body.forceAccum * body.invMass;
         body.linearVelocity += acceleration * _dt;
+
+        if (body.maxFallSpeed > 0.0f && !m_gravity.IsNull())
+        {
+            Vect3f32 gravityDir = m_gravity.Normalized();
+            float fallSpeed = body.linearVelocity.Dot(gravityDir);
+            if (fallSpeed > body.maxFallSpeed)
+                body.linearVelocity -= gravityDir * (fallSpeed - body.maxFallSpeed);
+        }
+
         body.position += body.linearVelocity * _dt;
         body.forceAccum = Vect3f32(0.0f, 0.0f, 0.0f);
     }

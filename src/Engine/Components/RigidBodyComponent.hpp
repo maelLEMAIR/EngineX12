@@ -11,6 +11,7 @@ struct RigidBodyComponent
     float restitution   = 0.2f;
     float friction      = 0.5f;
     float gravityScale  = 1.0f;
+    float maxFallSpeed  = 20.0f; // vitesse max le long de la gravité, 0 = illimité
     bool  isStatic      = false;
 
     Vect3f32 initialVelocity = Vect3f32(0.0f, 0.0f, 0.0f);
@@ -34,6 +35,13 @@ struct RigidBodyComponent
     {
         if (m_pWorld != nullptr && handle.IsValid())
             m_pWorld->SetLinearVelocity(handle, _velocity);
+    }
+
+	// ATTENTION : Ne reset pas la Velocity
+    void SetPosition(Vect3f32 const& _position)
+    {
+        if (m_pWorld != nullptr && handle.IsValid())
+            m_pWorld->SetPosition(handle, _position);
     }
 
 private:

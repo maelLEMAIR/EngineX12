@@ -70,6 +70,7 @@ bool PhysicsSystem::AddToPhysicWorld(World& world, EntityId _entity)
     desc.restitution = rb->restitution;
     desc.friction = rb->friction;
     desc.gravityScale = rb->gravityScale;
+    desc.maxFallSpeed = rb->maxFallSpeed;
     desc.isStatic = rb->isStatic;
     desc.collider = MakeCollider(*collider);
 
