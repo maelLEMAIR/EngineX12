@@ -38,7 +38,12 @@ void PhysicsWorld::PhysicsLoop()
     Chrono chrono;
     chrono.Start();
 
-    float accumulator = 0.0f;
+    float accumulator    = 0.0f;
+    float logAccumulator = 0.0f;
+
+    uint64 stepTimeAccumUs = 0;
+    uint64 maxStepTimeUs   = 0;
+    uint64 stepCount       = 0;
 
     while (m_running)
     {
@@ -48,8 +53,36 @@ void PhysicsWorld::PhysicsLoop()
 
         while (accumulator >= tickDelay)
         {
+            auto stepStart = std::chrono::high_resolution_clock::now();
             Step(tickDelay);
+            auto stepEnd = std::chrono::high_resolution_clock::now();
+
+            uint64 stepUs = (uint64)std::chrono::duration_cast<std::chrono::microseconds>(stepEnd - stepStart).count();
+            stepTimeAccumUs += stepUs;
+            maxStepTimeUs = MathUtils::Max(maxStepTimeUs, stepUs);
+            stepCount++;
+
             accumulator -= tickDelay;
+        }
+
+        // Statistiques du thread physique : coût réel de Step() (broadphase +
+        // narrowphase + résolution), indépendant du framerate de rendu.
+        logAccumulator += frameTime;
+        if (logAccumulator >= 1.0f && stepCount > 0)
+        {
+            printf("[PhysicsWorld] actifs=%u endormis=%u statiques=%u paires_candidates=%u | Step: %.3f ms moy, %.3f ms max (%llu steps/s)\n",
+                m_lastDynamicAwakeCount,
+                m_lastDynamicSleepingCount,
+                m_lastStaticCount,
+                m_lastCandidatePairCount,
+                (stepTimeAccumUs / 1000.0) / (double)stepCount,
+                maxStepTimeUs / 1000.0,
+                (unsigned long long)stepCount);
+
+            logAccumulator  = 0.0f;
+            stepTimeAccumUs = 0;
+            maxStepTimeUs   = 0;
+            stepCount       = 0;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -62,58 +95,194 @@ void PhysicsWorld::Step(float _dt)
 
     DrainCommands();
 
-    for (BodySlot& slot : m_bodies)
+    size_t count = m_bodies.size();
+
+    m_staticBodyIndices.clear();
+    m_activeDynamicIndices.clear();
+    m_gridCells.clear();
+
+    uint32 aliveDynamicCount = 0;
+
+    // Intégration, puis insertion en grille. Les corps statiques ne sont
+    // jamais insérés (AABB potentiellement bien plus grande qu'une cellule,
+    // cf. le sol) : ils sont mémorisés à part. Le suivi du sommeil est fait
+    // plus bas, après résolution des contacts (cf. commentaire associé).
+    for (size_t i = 0; i < count; i++)
     {
+        BodySlot& slot = m_bodies[i];
         if (!slot.alive)
             continue;
 
         RigidBody& body = slot.body;
+
         if (!body.IsDynamic())
-            continue;
-
-        Vect3f32 acceleration = m_gravity * body.gravityScale + body.forceAccum * body.invMass;
-        body.linearVelocity += acceleration * _dt;
-
-        if (body.maxFallSpeed > 0.0f && !m_gravity.IsNull())
         {
-            Vect3f32 gravityDir = m_gravity.Normalized();
-            float fallSpeed = body.linearVelocity.Dot(gravityDir);
-            if (fallSpeed > body.maxFallSpeed)
-                body.linearVelocity -= gravityDir * (fallSpeed - body.maxFallSpeed);
+            m_staticBodyIndices.push_back((uint32)i);
+            continue;
         }
 
-        body.position += body.linearVelocity * _dt;
+        if (!body.isSleeping)
+        {
+            Vect3f32 acceleration = m_gravity * body.gravityScale + body.forceAccum * body.invMass;
+            body.linearVelocity += acceleration * _dt;
+
+            if (body.maxFallSpeed > 0.0f && !m_gravity.IsNull())
+            {
+                Vect3f32 gravityDir = m_gravity.Normalized();
+                float fallSpeed = body.linearVelocity.Dot(gravityDir);
+                if (fallSpeed > body.maxFallSpeed)
+                    body.linearVelocity -= gravityDir * (fallSpeed - body.maxFallSpeed);
+            }
+
+            body.position += body.linearVelocity * _dt;
+        }
+
         body.forceAccum = Vect3f32(0.0f, 0.0f, 0.0f);
+        aliveDynamicCount++;
+
+        if (!body.isSleeping)
+            m_activeDynamicIndices.push_back((uint32)i);
+
+        InsertIntoGrid((uint32)i, MakeBroadphaseAABB(body));
     }
 
-    size_t count = m_bodies.size();
-    for (size_t i = 0; i < count; i++)
+    // Paires dynamique-dynamique : uniquement entre corps partageant au
+    // moins une cellule de la grille.
+    m_testedPairs.clear();
+
+    for (auto const& cell : m_gridCells)
     {
-        if (!m_bodies[i].alive)
-            continue;
+        Vector<uint32> const& indices = cell.second;
 
-        for (size_t j = i + 1; j < count; j++)
+        for (size_t a = 0; a < indices.size(); a++)
         {
-            if (!m_bodies[j].alive)
-                continue;
+            for (size_t b = a + 1; b < indices.size(); b++)
+            {
+                uint32 i = indices[a];
+                uint32 j = indices[b];
 
-            RigidBody& a = m_bodies[i].body;
-            RigidBody& b = m_bodies[j].body;
+                if (i > j)
+                {
+                    uint32 tmp = i;
+                    i = j;
+                    j = tmp;
+                }
 
-            if (!a.IsDynamic() && !b.IsDynamic())
-                continue;
+                uint64 pairKey = (uint64(i) << 32) | uint64(j);
+                if (!m_testedPairs.insert(pairKey).second)
+                    continue; // déjà testée via une autre cellule partagée
 
-            AABB aabbA = MakeBroadphaseAABB(a);
-            AABB aabbB = MakeBroadphaseAABB(b);
-
-            if (!aabbA.Intersects(aabbB))
-                continue;
-
-            Manifold manifold;
-            if (NarrowPhase(a, b, manifold))
-                ResolveContact(a, b, manifold);
+                TestBodyPair(i, j);
+            }
         }
     }
+
+    // Paires dynamique-statique : peu de corps statiques, testés contre les
+    // seuls corps dynamiques actifs (un corps endormi repose déjà en
+    // équilibre sur son support, inutile de le retester chaque tick).
+    for (uint32 staticIdx : m_staticBodyIndices)
+    {
+        for (uint32 dynIdx : m_activeDynamicIndices)
+            TestBodyPair(staticIdx, dynIdx);
+    }
+
+    // Suivi du sommeil, évalué APRES résolution des contacts : la vitesse
+    // juste après l'intégration inclut encore l'accélération de gravité de
+    // ce tick (qui sera annulée par la résolution d'un contact au repos) et
+    // franchirait donc systématiquement le seuil, empêchant tout corps posé
+    // de jamais s'endormir.
+    uint32 sleepingCount = 0;
+
+    for (uint32 idx : m_activeDynamicIndices)
+    {
+        RigidBody& body = m_bodies[idx].body;
+
+        if (body.linearVelocity.LengthSquared() < k_sleepLinearVelocitySqThreshold)
+        {
+            body.sleepTimer += _dt;
+            if (body.sleepTimer >= k_sleepTimeThreshold)
+            {
+                body.isSleeping     = true;
+                body.linearVelocity = Vect3f32(0.0f, 0.0f, 0.0f);
+                sleepingCount++;
+            }
+        }
+        else
+        {
+            body.sleepTimer = 0.0f;
+        }
+    }
+
+    m_lastDynamicAwakeCount    = (uint32)m_activeDynamicIndices.size() - sleepingCount;
+    m_lastDynamicSleepingCount = aliveDynamicCount - m_lastDynamicAwakeCount;
+    m_lastStaticCount          = (uint32)m_staticBodyIndices.size();
+    m_lastCandidatePairCount   = (uint32)m_testedPairs.size();
+}
+
+int64 PhysicsWorld::PackCellCoord(int32 _x, int32 _y, int32 _z)
+{
+    // Décalage pour supporter des coordonnées de cellule négatives ;
+    // 21 bits par axe (~ +/-1M cellules), largement suffisant pour une scène.
+    const int64 offset = 1 << 20;
+    int64 x = (int64)_x + offset;
+    int64 y = (int64)_y + offset;
+    int64 z = (int64)_z + offset;
+    return (x << 42) | (y << 21) | z;
+}
+
+void PhysicsWorld::InsertIntoGrid(uint32 _bodyIndex, AABB const& _aabb)
+{
+    int32 minX = MathUtils::Floor(_aabb.min.x / m_broadphaseCellSize);
+    int32 minY = MathUtils::Floor(_aabb.min.y / m_broadphaseCellSize);
+    int32 minZ = MathUtils::Floor(_aabb.min.z / m_broadphaseCellSize);
+    int32 maxX = MathUtils::Floor(_aabb.max.x / m_broadphaseCellSize);
+    int32 maxY = MathUtils::Floor(_aabb.max.y / m_broadphaseCellSize);
+    int32 maxZ = MathUtils::Floor(_aabb.max.z / m_broadphaseCellSize);
+
+    for (int32 x = minX; x <= maxX; x++)
+        for (int32 y = minY; y <= maxY; y++)
+            for (int32 z = minZ; z <= maxZ; z++)
+                m_gridCells[PackCellCoord(x, y, z)].push_back(_bodyIndex);
+}
+
+void PhysicsWorld::TestBodyPair(uint32 _i, uint32 _j)
+{
+    RigidBody& a = m_bodies[_i].body;
+    RigidBody& b = m_bodies[_j].body;
+
+    if (!a.IsDynamic() && !b.IsDynamic())
+        return;
+
+    // Deux corps endormis sont en équilibre stable : rien de nouveau à résoudre.
+    if (a.isSleeping && b.isSleeping)
+        return;
+
+    AABB aabbA = MakeBroadphaseAABB(a);
+    AABB aabbB = MakeBroadphaseAABB(b);
+
+    if (!aabbA.Intersects(aabbB))
+        return;
+
+    Manifold manifold;
+    if (!NarrowPhase(a, b, manifold))
+        return;
+
+    // Un contact persistant (résultant du repos) ne doit pas empêcher un tas
+    // de s'endormir : on ne réveille un corps endormi que si son partenaire
+    // porte une vitesse réellement significative (impact), pas simplement
+    // parce qu'il chevauche encore géométriquement son voisin au repos.
+    bool aMoving = a.IsDynamic() && a.linearVelocity.LengthSquared() >= k_sleepLinearVelocitySqThreshold;
+    bool bMoving = b.IsDynamic() && b.linearVelocity.LengthSquared() >= k_sleepLinearVelocitySqThreshold;
+
+    if (a.isSleeping && !bMoving)
+        return;
+    if (b.isSleeping && !aMoving)
+        return;
+
+    if (a.isSleeping) { a.isSleeping = false; a.sleepTimer = 0.0f; }
+    if (b.isSleeping) { b.isSleeping = false; b.sleepTimer = 0.0f; }
+
+    ResolveContact(a, b, manifold);
 }
 
 void PhysicsWorld::DrainCommands()
@@ -131,6 +300,12 @@ void PhysicsWorld::DrainCommands()
 
         if (body != nullptr)
         {
+            // Toute commande explicite réveille le corps : un ApplyImpulse/
+            // SetVelocity sur un corps endormi doit avoir un effet immédiat,
+            // pas être écrasé par le maintien à zéro d'un corps qui dort.
+            body->isSleeping = false;
+            body->sleepTimer = 0.0f;
+
             switch (cmd.type)
             {
             case CommandType::ApplyForce:
@@ -248,6 +423,12 @@ void PhysicsWorld::SetGravity(Vect3f32 const& _gravity)
     m_gravity = _gravity;
 }
 
+void PhysicsWorld::SetBroadphaseCellSize(float _cellSize)
+{
+    LockGuard lock(m_bodiesMutex);
+    m_broadphaseCellSize = MathUtils::Max(_cellSize, 0.01f);
+}
+
 void PhysicsWorld::GetSnapshot(Vector<BodySnapshot>& _out)
 {
     LockGuard lock(m_bodiesMutex);
@@ -362,7 +543,12 @@ void PhysicsWorld::ResolveContact(RigidBody& _a, RigidBody& _b, Manifold const& 
 
     if (velAlongNormal <= 0.0f)
     {
-        float e = MathUtils::Min(_a.restitution, _b.restitution);
+        // En dessous de ce seuil, on désactive la restitution : sans ça, un
+        // contact au repos (vitesse de rapprochement quasi nulle réinjectée
+        // par la gravité à chaque tick) rebondit indéfiniment au lieu de
+        // converger vers zéro, ce qui empêche tout corps de s'endormir.
+        const float restitutionVelocityThreshold = 1.0f;
+        float e = (-velAlongNormal < restitutionVelocityThreshold) ? 0.0f : MathUtils::Min(_a.restitution, _b.restitution);
         float j = -(1.0f + e) * velAlongNormal / invMassSum;
 
         Vect3f32 impulse = _manifold.normal * j;

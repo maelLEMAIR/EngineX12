@@ -18,6 +18,9 @@ struct RigidBody
     float maxFallSpeed  = 0.0f; // vitesse max le long de la gravité, 0 = illimité
     bool  isStatic      = false;
 
+    bool  isSleeping    = false; // corps dynamique au repos, exclu de l'intégration/broadphase statique
+    float sleepTimer    = 0.0f;  // temps cumulé sous le seuil de vitesse de sommeil
+
     Collider collider;
 
     bool IsDynamic() const { return !isStatic && invMass > 0.0f; }

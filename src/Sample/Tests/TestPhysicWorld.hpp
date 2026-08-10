@@ -13,6 +13,8 @@ class TestPhysicWorldScene : public Scene
 	EntityId cubeEntity = 0;
 
     float logTimer = 0.0f;
+    int   logFrameCount = 0;
+    int   dynamicBodyCount = 0;
 
     void OnInit() override
     {
@@ -45,7 +47,7 @@ class TestPhysicWorldScene : public Scene
 		cubeR.materialId = RessourceManager::GetMaterialId("Default");
 		TransformComponent* cubeT = &world.AddComponent<TransformComponent>(cubeEntity);
 		cubeT->local.SetScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
-		cubeT->local.SetPosition(XMFLOAT3(0.0f, 5.0f, 0.0f));
+		cubeT->local.SetPosition(XMFLOAT3(10.0f, 5.0f, 10.0f)); // à l'écart du pavé de stress-test (x/z dans [-3.675, 3.675])
 		ColliderComponent* cubeC = &world.AddComponent<ColliderComponent>(cubeEntity);
 		cubeC->shape = ColliderShape::AABB;
         RigidBodyComponent* cubeRB = &world.AddComponent<RigidBodyComponent>(cubeEntity);
@@ -56,7 +58,7 @@ class TestPhysicWorldScene : public Scene
 		cubeR2.materialId = RessourceManager::GetMaterialId("Default");
 		TransformComponent* cubeT2 = &world.AddComponent<TransformComponent>(cubeEntity2);
 		cubeT2->local.SetScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
-		cubeT2->local.SetPosition(XMFLOAT3(0.0f, 10.0f, 0.0f));
+		cubeT2->local.SetPosition(XMFLOAT3(10.0f, 10.0f, 0.0f)); // à l'écart du pavé de stress-test
 		ColliderComponent* cubeC2 = &world.AddComponent<ColliderComponent>(cubeEntity2);
 		cubeC2->shape = ColliderShape::AABB;
 		RigidBodyComponent* cubeRB2 = &world.AddComponent<RigidBodyComponent>(cubeEntity2);
@@ -64,6 +66,50 @@ class TestPhysicWorldScene : public Scene
 		world.GetSystem<PhysicsSystem>()->AddToPhysicWorld(world, floorEntity);
 		world.GetSystem<PhysicsSystem>()->AddToPhysicWorld(world, cubeEntity);
 		world.GetSystem<PhysicsSystem>()->AddToPhysicWorld(world, cubeEntity2);
+
+		// Pavé de cubes empilés au-dessus du sol : génère un très grand nombre
+		// de contacts simultanés (sol + voisins) une fois la pile tassée, afin
+		// de mesurer le coût du broadphase/narrowphase de PhysicsWorld quand
+		// le nombre de paires en collision explose.
+		const int   stressGridX  = 8;
+		const int   stressGridY  = 4;
+		const int   stressGridZ  = 8;
+		const float stressSpacing = 1.05f;
+		const float stressStartY  = 3.0f;
+
+		uint32 stressGeoId = RessourceManager::GetGeometryId("Cube");
+		uint32 stressMatId = RessourceManager::GetMaterialId("Default");
+
+		for (int x = 0; x < stressGridX; x++)
+		{
+			for (int y = 0; y < stressGridY; y++)
+			{
+				for (int z = 0; z < stressGridZ; z++)
+				{
+					EntityId stressEntity = world.CreateEntity();
+
+					MeshRenderer& stressR = world.AddComponent<MeshRenderer>(stressEntity);
+					stressR.geoId = stressGeoId;
+					stressR.materialId = stressMatId;
+
+					TransformComponent* stressT = &world.AddComponent<TransformComponent>(stressEntity);
+					stressT->local.SetScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
+					stressT->local.SetPosition(XMFLOAT3(
+						(x - (stressGridX - 1) * 0.5f) * stressSpacing,
+						stressStartY + y * stressSpacing,
+						(z - (stressGridZ - 1) * 0.5f) * stressSpacing));
+
+					ColliderComponent* stressC = &world.AddComponent<ColliderComponent>(stressEntity);
+					stressC->shape = ColliderShape::AABB;
+					world.AddComponent<RigidBodyComponent>(stressEntity);
+
+					world.GetSystem<PhysicsSystem>()->AddToPhysicWorld(world, stressEntity);
+					dynamicBodyCount++;
+				}
+			}
+		}
+
+		dynamicBodyCount += 2; // cubeEntity + cubeEntity2
 
         camera = world.CreateEntity();
         TransformComponent* camT = &world.AddComponent<TransformComponent>(camera);
@@ -103,7 +149,20 @@ class TestPhysicWorldScene : public Scene
 			cubeRB->SetLinearVelocity(Vect3f32(0.0f, 10.0f, 0.0f));
 
 		if (InputManager::IsKeyPressed(E))
-			cubeRB->SetPosition(Vect3f32(0.0f, 5.0f, 0.0f));
+            cubeRB->ApplyForce(Vect3f32(100.0f, 0.0f, 0.0f));
+
+		if (InputManager::IsKeyPressed(A))
+			cubeRB->ApplyForce(Vect3f32(-100.0f, 0.0f, 0.0f));
+
+		logFrameCount++;
+		logTimer += _dt;
+		if (logTimer >= 1.0f)
+		{
+			printf("[PhysicsStress] %d corps dynamiques | %d frames/s | %.3f ms/frame (moyenne)\n",
+				dynamicBodyCount, logFrameCount, (logTimer / logFrameCount) * 1000.0f);
+			logTimer = 0.0f;
+			logFrameCount = 0;
+		}
     }
 };
 

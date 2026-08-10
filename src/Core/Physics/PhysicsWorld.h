@@ -54,6 +54,10 @@ public:
 
     void SetGravity(Vect3f32 const& _gravity);
 
+    // Taille de cellule de la grille de broadphase : à adapter à la taille
+    // moyenne des colliders dynamiques de la scène (par défaut 2 unités).
+    void SetBroadphaseCellSize(float _cellSize);
+
     // Copie {handle, position, vitesse} de tous les corps vivants sous verrou.
     // A appeler une fois par frame depuis le thread principal.
     void GetSnapshot(Vector<BodySnapshot>& _out);
@@ -92,6 +96,14 @@ private:
     void ResolveContact(RigidBody& _a, RigidBody& _b, Manifold const& _manifold) const;
     AABB MakeBroadphaseAABB(RigidBody const& _body) const;
 
+    // Broadphase : grille de hachage uniforme reconstruite à chaque Step().
+    // Les corps statiques (peu nombreux, AABB potentiellement énorme comme un
+    // sol) ne sont pas insérés dans la grille : ils sont testés directement
+    // contre les corps dynamiques actifs (cf. m_activeDynamicIndices).
+    static int64 PackCellCoord(int32 _x, int32 _y, int32 _z);
+    void InsertIntoGrid(uint32 _bodyIndex, AABB const& _aabb);
+    void TestBodyPair(uint32 _i, uint32 _j);
+
     Vector<BodySlot> m_bodies;
     Vector<uint32>   m_freeList;
     Mutex            m_bodiesMutex;
@@ -100,6 +112,26 @@ private:
     Mutex          m_commandMutex;
 
     Vect3f32 m_gravity = Vect3f32(0.0f, -9.81f, 0.0f);
+
+    float m_broadphaseCellSize = 2.0f;
+
+    UnorderedMap<int64, Vector<uint32>> m_gridCells;
+    Vector<uint32>                      m_staticBodyIndices;
+    Vector<uint32>                      m_activeDynamicIndices;
+    UnorderedSet<uint64>                m_testedPairs;
+
+    // Statistiques du dernier Step(), lues par PhysicsLoop() (même thread,
+    // pas de synchronisation nécessaire) pour le log de performance.
+    uint32 m_lastDynamicAwakeCount    = 0;
+    uint32 m_lastDynamicSleepingCount = 0;
+    uint32 m_lastStaticCount          = 0;
+    uint32 m_lastCandidatePairCount   = 0;
+
+    // Un corps dynamique dont la vitesse reste sous ce seuil pendant ce temps
+    // s'endort : plus d'intégration ni de test broadphase contre les corps
+    // statiques tant qu'il n'est pas réveillé par un contact ou une commande.
+    static constexpr float k_sleepLinearVelocitySqThreshold = 0.01f;
+    static constexpr float k_sleepTimeThreshold             = 0.5f;
 
     std::thread       m_thread;
     std::atomic<bool> m_running = false;
