@@ -12,14 +12,14 @@ enum class LightType
 
 struct Light
 {
-    XMFLOAT3 Strength;
+    Vect3f32 Strength;
     float FalloffStart;
-    XMFLOAT3 Direction;
+    Vect3f32 Direction;
     float FalloffEnd;
-    XMFLOAT3 Position;
+    Vect3f32 Position;
     float SpotPower;
 
-    XMFLOAT4 Color;
+    Vect4f32 Color;
 };
 
 struct LightDescriptor
@@ -83,13 +83,13 @@ public:
         LightDescriptor result;
         result.type = _type;
         result.light = {
-            XMFLOAT3{ 1.0f, 1.0f, 1.0f },
+            Vect3f32{ 1.0f, 1.0f, 1.0f },
             5.0f,
-            XMFLOAT3{ 1.0f, 0.0f, 0.0f },
+            Vect3f32{ 1.0f, 0.0f, 0.0f },
             10.0f,
-            XMFLOAT3{ 0.0f, 0.0f, 0.0f },
+            Vect3f32{ 0.0f, 0.0f, 0.0f },
             2.0f,
-            XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)
+            Vect4f32(1.0f, 1.0f, 1.0f, 1.0f)
         };
         return result;
     }

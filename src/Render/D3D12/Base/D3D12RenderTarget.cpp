@@ -2,7 +2,7 @@
 
 #include "D3D12Context.h"
 
-D3D12RenderTarget::D3D12RenderTarget(int _width, int _height, D3D12Context* _pContext, XMFLOAT3 _clearColor)
+D3D12RenderTarget::D3D12RenderTarget(int _width, int _height, D3D12Context* _pContext, Vect3f32 _clearColor)
 {
     m_width = _width;
     m_height = _height;
@@ -235,7 +235,7 @@ void D3D12RenderTarget::CreateComputeDescriptors()
     device->CreateUnorderedAccessView(m_resource, nullptr, &uavDesc, uavHandle);
 }
 
-void D3D12RenderTarget::Clear(XMFLOAT3 _color)
+void D3D12RenderTarget::Clear(Vect3f32 _color)
 {
     if (m_pContext == nullptr)
         return;

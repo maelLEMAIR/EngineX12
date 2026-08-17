@@ -3,23 +3,9 @@
 
 #include "../../Common/Common.h"
 
-struct Vertex
-{
-    XMFLOAT3 position;
-    XMFLOAT2 uv;
-    XMFLOAT3 normal = XMFLOAT3(0.0f, 0.0f, 0.0f);
-    XMFLOAT4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    XMFLOAT3 tangent = XMFLOAT3(0.0f, 0.0f, 0.0f);
-};
+#include "../../Common/Utils/RenderItemHelper.hpp"
 
-enum class PrimitiveTopology
-{
-    PointList,
-    LineList,
-    LineStrip,
-    TriangleList,
-    TriangleStrip
-};
+#define DEFAULT_BOUNDING_VOLUME_TYPE BoundingVolumeType::SPHERE_T
 
 class Geometry
 {
@@ -29,25 +15,30 @@ public:
     virtual void SetVertexData(const Vertex* _data, uint64 _vertexCount) = 0;
     virtual void SetIndexData(const uint32* _indices, uint64 _indexCount) = 0;
     
-    void SetPrimitiveTopology(PrimitiveTopology _topology) { m_primitiveTopology = _topology; }
+    void SetPrimitiveTopology(PrimitiveTopology _topology);
+    void SetBoundingVolumeType(BoundingVolumeType _boundingVolumeType);
     
-    uint64 GetVertexCount() const { return m_vertexCount; }
-    uint64 GetIndexCount() const { return m_indexCount; }
-    PrimitiveTopology GetTopology() const { return m_primitiveTopology; }
-    bool IsIndexed() const { return m_indexCount > 0; }
-
-    BoundingBox& GetBounds() { return m_bounds; }
+    uint64 GetVertexCount() const;
+    uint64 GetIndexCount() const;
+    
+    PrimitiveTopology GetTopology() const;
+    bool IsIndexed() const;
+    
+    bool FrustumCheck(Frustum const& _frustum, Mat4f32 const& _world);
+    void CalculateBounds(const Vertex* _data, uint64 _vertexCount);
+    
 protected:
     uint64 m_vertexCount = 0;
     uint64 m_indexCount = 0;
     PrimitiveTopology m_primitiveTopology = PrimitiveTopology::TriangleList;
 
-    BoundingBox m_bounds;
-
     bool m_isDynamic = false;
     
-    Geometry(bool _isDynamic);
+    BoundingVolumeType m_boundingVolumeType;
+    float m_radius;
+    Vect3f32 m_center;
+    Vect3f32 m_extent;
     
-    void CalculateBounds(const Vertex* _vertices, uint64 _vertexCount);
+    Geometry(bool _isDynamic, BoundingVolumeType _vType = DEFAULT_BOUNDING_VOLUME_TYPE);
 };
 #endif

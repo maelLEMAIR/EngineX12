@@ -22,8 +22,8 @@ UiMaterial* D3D12UiShader::CreateMaterial()
     return mat;
 }
 
-D3D12UiShader::D3D12UiShader(D3D12Context* _pContext, ShaderFormat _format)
-    : m_pContext(_pContext)
+D3D12UiShader::D3D12UiShader(D3D12Context* _pContext, ShaderFormat _format, ShaderDescriptor _desc)
+    : m_pContext(_pContext), UiShader(_desc)
 {
     m_format = _format;
 }

@@ -26,7 +26,7 @@ public:
 
     void Resize(int _width, int _height) override;
 
-    void Clear(XMFLOAT3 _color) override;
+    void Clear(Vect3f32 _color) override;
     void BindAsTexture(uint32 _rootIndex);
 
     void SetToWrite() override;
@@ -41,7 +41,7 @@ private:
     int m_uavHeapIndex = -1;
 
     D3D12Context* m_pContext = nullptr;
-    D3D12RenderTarget(int width, int height, D3D12Context* _pContext, XMFLOAT3 _clearColor = XMFLOAT3(0.0f, 0.0f, 0.0f));
+    D3D12RenderTarget(int width, int height, D3D12Context* _pContext, Vect3f32 _clearColor = Vect3f32(0.0f, 0.0f, 0.0f));
 
     D3D12_RESOURCE_STATES m_currState = D3D12_RESOURCE_STATE_PRESENT;
     

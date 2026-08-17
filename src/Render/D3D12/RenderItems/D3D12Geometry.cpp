@@ -91,6 +91,20 @@ D3D12_INDEX_BUFFER_VIEW D3D12Geometry::IndexBufferView() const
     return ibv;
 }
 
+D3D12_PRIMITIVE_TOPOLOGY D3D12Geometry::GetD3DTopology() const
+{
+    D3D_PRIMITIVE_TOPOLOGY pt[5] =
+    {
+        D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
+        D3D11_PRIMITIVE_TOPOLOGY_LINELIST,
+        D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP,
+        D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+        D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP
+    };
+
+    return pt[(int)m_primitiveTopology];
+}
+
 D3D12Geometry::~D3D12Geometry()
 {
     delete m_vertexBufferDynamic;

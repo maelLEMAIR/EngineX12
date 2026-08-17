@@ -5,9 +5,9 @@
 
 struct UiVertex
 {
-    XMFLOAT2 position;
-    XMFLOAT2 uv;
-    XMFLOAT4 color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    Vect2f32 position;
+    Vect2f32 uv;
+    Vect4f32 color = Vect4f32(1.0f, 1.0f, 1.0f, 1.0f);
 };
 
 class Sprite

@@ -16,7 +16,7 @@ public:
     virtual void SetComputeOutput() = 0;
     virtual void SetInput() = 0;
 
-    virtual void Clear(XMFLOAT3 _color) = 0;
+    virtual void Clear(Vect3f32 _color) = 0;
 
     virtual void BindAsTexture(uint32 _rootIndex) = 0;
     
@@ -27,7 +27,7 @@ protected:
     int m_width = 0;
     int m_height = 0;
 
-    XMFLOAT3 m_clearColor = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    Vect3f32 m_clearColor = Vect3f32(0.0f);
     
     friend class Device;
     friend class D3D12Device;

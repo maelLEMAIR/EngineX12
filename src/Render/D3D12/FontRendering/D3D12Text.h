@@ -11,7 +11,7 @@ class D3D12RenderTarget;
 
 struct TextColorCB
 {
-    XMFLOAT4 color;
+    Vect4f32 color;
 };
 
 class D3D12Text : public Text

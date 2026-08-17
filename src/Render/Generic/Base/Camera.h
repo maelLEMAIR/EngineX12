@@ -3,19 +3,14 @@
 
 #include "../../Common/Common.h"
 
-struct Plane
-{
-    float a, b, c, d;
-};
-
 struct PassData
 {
-    XMFLOAT4X4 viewProj;
-    XMFLOAT4X4 view;
-    XMFLOAT4X4 proj;
-    XMFLOAT4X4 invViewProj;
+    Mat4f32 viewProj;
+    Mat4f32 view;
+    Mat4f32 proj;
+    Mat4f32 invViewProj;
 
-    XMFLOAT3   eyePosW;
+    Vect3f32   eyePosW;
     float               nearZ;
     
     float               farZ;
@@ -23,44 +18,46 @@ struct PassData
     float               deltaTime;
     float               pad0;
 
-    XMFLOAT2   renderTargetSize;
-    XMFLOAT2   invRenderTargetSize;
+    Vect2f32   renderTargetSize;
+    Vect2f32   invRenderTargetSize;
 };
 
 class Camera 
 {
 public:
-    float fov = 0.25f * MathHelper::Pi;
-    float nearPlane = 1.0f;
-    float farPlane = 1000.0f;
-    
     Camera();
     ~Camera();
-    bool IsInFrustum(BoundingBox const& _b, XMFLOAT4X4 _world);
     
-    void SetWorld(XMFLOAT4X4& _world);
-    void SetProj(float _aspectRatio);
+    void SetWorld(Mat4f32 const& _world);
+    void SetFov(float _fov);
+    void SetNearDistance(float _nearPlane);
+    void SetFarDistance(float _farPlane);
+    void SetAspectRatio(float _aspectRatio);
+    
+    float GetFov() const;
+    float GetNearDistance() const;
+    float GetFarDistance() const;
+    float GetAspectRatio() const;
+    
     void UpdateMatrices();
-
-    // TODO REMOVE
-    void SetRotation(XMFLOAT3 ypr);
-    void LookAt(XMFLOAT3 _target);
-    void SetPos(XMFLOAT3 _pos);
+    Frustum const& GetFrustum();
     
 private:
-    XMFLOAT4X4 m_world = MathHelper::Identity4x4();
-    XMFLOAT4X4 m_view = MathHelper::Identity4x4();
-    XMFLOAT4X4 m_proj = MathHelper::Identity4x4();
-    XMFLOAT4X4 m_viewProj = MathHelper::Identity4x4();
+    Mat4f32 m_world      = Mat4f32::Identity();
+    Mat4f32 m_view       = Mat4f32::Identity();
+    Mat4f32 m_proj       = Mat4f32::Identity();
+    Mat4f32 m_viewProj   = Mat4f32::Identity();
     
-    XMFLOAT3 m_pos = {0.0f, 0.0f, 0.0f};
-
-    Plane m_frustum[6];
+    Vect3f32 m_pos = { 0.0f, 0.0f, 0.0f };
+    
+    float m_fov = 0.25f * MathUtils::PI;
+    float m_nearPlane = 1.0f;
+    float m_farPlane = 1000.0f;
+    float m_aspectRatio = 0.0f;
+    
+    Frustum m_frustum;
     
     void FillData(PassData* _passData);
-
-    void CalculateFrustum();
-    Plane MakePlane(XMFLOAT4& _a, XMFLOAT4 _b);
     
     friend class Device;
     friend class D3D12Device;

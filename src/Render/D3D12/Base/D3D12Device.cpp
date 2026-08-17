@@ -94,9 +94,9 @@ void D3D12Device::BeginDraw(RenderTarget* _pRenderTarget, DepthStencil* _pDepthS
 
     if (m_pMainCamera != nullptr)
     {
-        m_pMainCamera->SetProj(m_screenViewport.Width / m_screenViewport.Height);
+        m_pMainCamera->SetAspectRatio(m_screenViewport.Width / m_screenViewport.Height);
         m_pMainCamera->FillData(&m_passData);
-        m_passData.renderTargetSize = XMFLOAT2((float)m_pRenderTarget->m_width, (float)m_pRenderTarget->m_height);
+        m_passData.renderTargetSize = Vect2f32((float)m_pRenderTarget->m_width, (float)m_pRenderTarget->m_height);
     }
     
     m_pPerPassBuffer->CopyData(0, m_passData);
@@ -104,14 +104,17 @@ void D3D12Device::BeginDraw(RenderTarget* _pRenderTarget, DepthStencil* _pDepthS
     ResetPerObjectBuffers();
 }
 
-void D3D12Device::Draw(Geometry* _geo, XMFLOAT4X4& _mat)
+void D3D12Device::Draw(Geometry* _geo, Mat4f32 const& _mat)
 {
     assert(m_pCurrMaterial != nullptr && "No material selected");
 
     if (m_pMainCamera == nullptr) return;
 
-    if (m_pMainCamera->IsInFrustum(_geo->GetBounds(), _mat) == false)
+    if (!_geo->FrustumCheck(m_pMainCamera->GetFrustum(), _mat))
+    {
+        // std::cout << "Object culled" << std::endl;
         return;
+    }
     
     m_pCurrMaterial->Bind();
     m_pContext.GetCommandList()->SetGraphicsRootConstantBufferView(0, GetObjectCBAdress(_mat));
@@ -123,9 +126,8 @@ void D3D12Device::Draw(Geometry* _geo, XMFLOAT4X4& _mat)
     D3D12Geometry* geo = dynamic_cast<D3D12Geometry*>(_geo);
 
     assert(geo != nullptr && "Unusable geometry type");
-
-    // TODO use per geometry topology
-    m_pContext.GetCommandList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    
+    m_pContext.GetCommandList()->IASetPrimitiveTopology(geo->GetD3DTopology());
     
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView = geo->VertexBufferView();
     D3D12_INDEX_BUFFER_VIEW indexBufferView = geo->IndexBufferView();
@@ -193,7 +195,7 @@ void D3D12Device::RunComputeShader(ComputeShader* _pComputeShader, bool _isOnRT)
     _pComputeShader->FlushUAVWrites();
 }
 
-void D3D12Device::DrawUi(Sprite* _sprite, XMFLOAT4X4& _mat)
+void D3D12Device::DrawUi(Sprite* _sprite, Mat4f32 const& _mat)
 {
     assert(m_pCurrUiMaterial != nullptr && "No material selected");
 
@@ -222,7 +224,7 @@ void D3D12Device::DrawUi(Sprite* _sprite, XMFLOAT4X4& _mat)
         m_pContext.GetCommandList()->DrawInstanced((UINT)sprite->GetVertexCount(), 1, 0, 0);
 }
 
-void D3D12Device::DrawRenderText(Text* _text, XMFLOAT4X4& _mat)
+void D3D12Device::DrawRenderText(Text* _text, Mat4f32 const& _mat)
 {
     if (_text->IsDirty()) _text->Build();
 
@@ -282,16 +284,16 @@ void D3D12Device::SetLights(Vector<LightDescriptor>& _vLights)
     m_pLightBuffer->CopyData(0, m_lightData);
 }
 
-Shader* D3D12Device::CreateShader(WString const& _path, ShaderFormat _format, bool _isLit)
+Shader* D3D12Device::CreateShader(WString const& _path, ShaderFormat _format, ShaderDescriptor _desc)
 {
-    D3D12Shader* shader = new D3D12Shader(&m_pContext, _format, _isLit);
+    D3D12Shader* shader = new D3D12Shader(&m_pContext, _format, _desc);
     shader->Compile(_path);
     return shader;
 }
 
-UiShader* D3D12Device::CreateUiShader(WString const& _path, ShaderFormat _format)
+UiShader* D3D12Device::CreateUiShader(WString const& _path, ShaderFormat _format, ShaderDescriptor _desc)
 {
-    D3D12UiShader* shader = new D3D12UiShader(&m_pContext, _format);
+    D3D12UiShader* shader = new D3D12UiShader(&m_pContext, _format, _desc);
     shader->Compile(_path);
     return shader;
 }
@@ -341,28 +343,24 @@ Text* D3D12Device::CreateText(RenderFont* _pFont)
     return text;
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS D3D12Device::GetObjectCBAdress(XMFLOAT4X4 _mat)
+D3D12_GPU_VIRTUAL_ADDRESS D3D12Device::GetObjectCBAdress(Mat4f32 const& _mat)
 {
-    XMMATRIX temp = XMLoadFloat4x4(&_mat);
-    temp = XMMatrixTranspose(temp);
-    XMStoreFloat4x4(&_mat, temp);
-    
     if (m_vPerObjectBuffers.size() <= m_objCbIndex)
     {
-        m_vPerObjectBuffers.push_back(new UploadBuffer<XMFLOAT4X4>(&m_pContext, 1000));
+        m_vPerObjectBuffers.push_back(new UploadBuffer<Mat4f32>(&m_pContext, 1000));
     }
 
-    UploadBuffer<XMFLOAT4X4>* pCurrBuffer = m_vPerObjectBuffers[m_objCbIndex];
+    UploadBuffer<Mat4f32>* pCurrBuffer = m_vPerObjectBuffers[m_objCbIndex];
 
     UINT bufferIndex = (UINT)pCurrBuffer->GetFirstAvailable();
 
-    pCurrBuffer->CopyData(bufferIndex, _mat);
+    pCurrBuffer->CopyData(bufferIndex, _mat.Transposed());
 
     if (bufferIndex == 999)
     {
         m_objCbIndex++;
         if (m_objCbIndex >= m_vPerObjectBuffers.size())
-            m_vPerObjectBuffers.push_back(new UploadBuffer<XMFLOAT4X4>(&m_pContext, 1000));
+            m_vPerObjectBuffers.push_back(new UploadBuffer<Mat4f32>(&m_pContext, 1000));
     }
 
     D3D12_GPU_VIRTUAL_ADDRESS addr = pCurrBuffer->GetGPUAddress(bufferIndex);
@@ -372,7 +370,7 @@ D3D12_GPU_VIRTUAL_ADDRESS D3D12Device::GetObjectCBAdress(XMFLOAT4X4 _mat)
 void D3D12Device::ResetPerObjectBuffers()
 {
     m_objCbIndex = 0;
-    for (UploadBuffer<XMFLOAT4X4>* buffer : m_vPerObjectBuffers)
+    for (UploadBuffer<Mat4f32>* buffer : m_vPerObjectBuffers)
     {
         buffer->Reset();
     }

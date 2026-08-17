@@ -18,6 +18,12 @@ struct PropertyDescriptor
     uint32 offset;
 };
 
+struct ShaderDescriptor
+{
+    bool isLit = false;
+    bool isWireFrame = false;
+};
+
 class ShaderFormat
 {
 public:

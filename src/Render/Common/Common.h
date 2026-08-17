@@ -2,6 +2,6 @@
 #define COMMON_H_DEFINED
 
 #include "../Core/define.h"
-#include "Utils/MathHelper.h"
+#include "../Core/Core.h"
 
 #endif

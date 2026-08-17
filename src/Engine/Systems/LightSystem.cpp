@@ -25,8 +25,8 @@ void LightSystem::Update(World& world, float _dt)
 
             desc.type = _l.type;
 
-            desc.light.Position = _t.world.pos;
-            desc.light.Direction = _t.world.forward;
+            desc.light.Position = Vect3f32(_t.world.pos.x, _t.world.pos.y, _t.world.pos.z);
+            desc.light.Direction = Vect3f32(_t.world.forward.x, _t.world.forward.y, _t.world.forward.z);
             lightDescriptors.push_back(desc);
             count++;
         }

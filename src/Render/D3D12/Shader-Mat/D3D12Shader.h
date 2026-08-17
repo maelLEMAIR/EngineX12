@@ -26,7 +26,7 @@ private:
 
     WString m_shaderPath;
 
-    D3D12Shader(D3D12Context* _pContext, ShaderFormat _format, bool _isLit = false);
+    D3D12Shader(D3D12Context* _pContext, ShaderFormat _format, ShaderDescriptor _desc = {} );
     
     void Compile(WString const& _shaderPath);
     ID3DBlob* CompileShader(WString _shaderPath, const String& _entryPoint, const String& _target);

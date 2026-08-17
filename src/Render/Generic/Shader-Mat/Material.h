@@ -14,9 +14,9 @@ public:
     virtual ~MaterialBase() = default;
 
     void SetFloat(const String&     _name, float _value)    { SetProperty(_name, _value); }
-    void SetFloat2(const String&    _name, XMFLOAT2 _value) { SetProperty(_name, _value); }
-    void SetFloat3(const String&    _name, XMFLOAT3 _value) { SetProperty(_name, _value); }
-    void SetFloat4(const String&    _name, XMFLOAT4 _value) { SetProperty(_name, _value); }
+    void SetFloat2(const String&    _name, Vect2f32 _value) { SetProperty(_name, _value); }
+    void SetFloat3(const String&    _name, Vect3f32 _value) { SetProperty(_name, _value); }
+    void SetFloat4(const String&    _name, Vect4f32 _value) { SetProperty(_name, _value); }
     void SetInt(const String&       _name, int _value)      { SetProperty(_name, _value); }
 
     void SetTexture(const String& _name, Texture* _pTexture);

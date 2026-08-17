@@ -50,9 +50,9 @@ void MaterialBase::CopyProperty(void* _dest, Any& _value, const PropertyDescript
     switch (desc.type)
     {
     case PropertyType::Float: {float v = std::any_cast<float>(_value); memcpy(ptr, &v, desc.size); break;}
-    case PropertyType::Float2: {XMFLOAT2 v = std::any_cast<XMFLOAT2>(_value); memcpy(ptr, &v, desc.size); break;}
-    case PropertyType::Float3: {XMFLOAT3 v = std::any_cast<XMFLOAT3>(_value); memcpy(ptr, &v, desc.size); break;}
-    case PropertyType::Float4: {XMFLOAT4 v = std::any_cast<XMFLOAT4>(_value); memcpy(ptr, &v, desc.size); break;}
+    case PropertyType::Float2: {Vect2f32 v = std::any_cast<Vect2f32>(_value); memcpy(ptr, &v, desc.size); break;}
+    case PropertyType::Float3: {Vect3f32 v = std::any_cast<Vect3f32>(_value); memcpy(ptr, &v, desc.size); break;}
+    case PropertyType::Float4: {Vect4f32 v = std::any_cast<Vect4f32>(_value); memcpy(ptr, &v, desc.size); break;}
     case PropertyType::Int: {int v = std::any_cast<int>(_value); memcpy(ptr, &v, desc.size); break;}
     }
 }

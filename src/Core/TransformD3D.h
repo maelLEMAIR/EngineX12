@@ -6,6 +6,7 @@
 using namespace DirectX;
 
 #include "define.h"
+#include "Math/Matrix/Matrix.h"
 
 enum class DIRTY_FLAG : uint32
 {
@@ -31,6 +32,8 @@ public:
     
     XMFLOAT4X4& GetMatrix();
     XMFLOAT4X4& GetInvMatrix();
+
+    Mat4f32 ToMat4f32();
 
     void SetIdentity();
     void UpdateMatrix();

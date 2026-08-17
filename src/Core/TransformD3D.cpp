@@ -85,8 +85,20 @@ XMFLOAT4X4& TransformD3D::GetInvMatrix()
 {
     if (dirty & (uint8)DIRTY_FLAG::INVERSE)
         UpdateInvMatrix();
-    
+
     return invMatrix;
+}
+
+Mat4f32 TransformD3D::ToMat4f32()
+{
+    XMFLOAT4X4& m = GetMatrix();
+
+    return Mat4f32(
+        m._11, m._12, m._13, m._14,
+        m._21, m._22, m._23, m._24,
+        m._31, m._32, m._33, m._34,
+        m._41, m._42, m._43, m._44
+    );
 }
 
 void TransformD3D::SetIdentity()

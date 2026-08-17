@@ -36,7 +36,7 @@ class MainScene : public Scene
         l.type = LightType::Point;
         l.SetStrength(10.0f);
         l.SetPoint(0.10f, 30.0f);
-        l.SetColor(XMFLOAT4(1.0f,0.0f,0.0f, 1.0f));
+        l.SetColor(Vect4f32(1.0f,0.0f,0.0f, 1.0f));
         
         Scene::OnInit();
     }

@@ -86,7 +86,8 @@ void EngineManager::Initialize(UINT _width, UINT _height, WString _title, bool _
             m_pWindow->ToggleFullScreen();
     }
 
-    m_pDevice->SetClearColor(ToColor(87, 185, 255));
+    XMFLOAT3 clearColor = ToColor(87, 185, 255);
+    m_pDevice->SetClearColor(Vect3f32(clearColor.x, clearColor.y, clearColor.z));
     m_pRessourceManager = new RessourceManager;
 
     RessourceManager::AddGeometry("Cube", GeometryFactory::BuildCube(m_pDevice));

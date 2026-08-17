@@ -53,10 +53,10 @@ void D3D12Text::BuildVertices(Vector<UiVertex>& _vertices, Vector<uint32>& _indi
         float x1 = x0 + glyph->atlasWidth;  
         float y1 = y0 + glyph->atlasHeight;
 
-        _vertices.push_back({ XMFLOAT2(x0, y0), XMFLOAT2(u0, v0), m_color });
-        _vertices.push_back({ XMFLOAT2(x1, y0), XMFLOAT2(u1, v0), m_color });
-        _vertices.push_back({ XMFLOAT2(x0, y1), XMFLOAT2(u0, v1), m_color });
-        _vertices.push_back({ XMFLOAT2(x1, y1), XMFLOAT2(u1, v1), m_color });
+        _vertices.push_back({ Vect2f32(x0, y0), Vect2f32(u0, v0), m_color });
+        _vertices.push_back({ Vect2f32(x1, y0), Vect2f32(u1, v0), m_color });
+        _vertices.push_back({ Vect2f32(x0, y1), Vect2f32(u0, v1), m_color });
+        _vertices.push_back({ Vect2f32(x1, y1), Vect2f32(u1, v1), m_color });
 
         _indices.push_back(baseIndex + 0);
         _indices.push_back(baseIndex + 1);

@@ -3,11 +3,10 @@
 #include "../Base/D3D12Context.h"
 #include "D3D12Material.h"
 
-D3D12Shader::D3D12Shader(D3D12Context* _pContext, ShaderFormat _format, bool _isLit)
+D3D12Shader::D3D12Shader(D3D12Context* _pContext, ShaderFormat _format, ShaderDescriptor _desc) : Shader(_desc)
 {
     m_pContext = _pContext;
     m_format = _format;
-    m_isLit = _isLit;
 }
 
 void D3D12Shader::Bind()
@@ -130,7 +129,13 @@ void D3D12Shader::BuildPSO()
     psoDesc.PS = { m_pPsBlob->GetBufferPointer(), m_pPsBlob->GetBufferSize() };
      
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+    if (m_desc.isWireFrame == true)
+    {
+        psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+        psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+    }
+    else
+        psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
      
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
      

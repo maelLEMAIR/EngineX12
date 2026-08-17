@@ -17,6 +17,8 @@ public:
     D3D12_VERTEX_BUFFER_VIEW VertexBufferView() const;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView() const;
 
+    D3D_PRIMITIVE_TOPOLOGY GetD3DTopology() const;
+
     ~D3D12Geometry() override;
 private:
     UploadBuffer<Vertex>* m_vertexBufferDynamic;

@@ -21,7 +21,7 @@ protected:
     Vector<RenderTarget*> m_vRenderTargets;
     DepthStencil* m_pDepthStencil = nullptr;
     
-    UINT m_backBufferIndex = 0;
+    uint8 m_backBufferIndex = 0;
     const int m_bufferCount = 2; 
 };
 

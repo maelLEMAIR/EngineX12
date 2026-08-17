@@ -20,7 +20,7 @@ struct TextComponent
         t->SetString(_text);
     }
     
-    void SetColor(XMFLOAT3 _color)
+    void SetColor(Vect3f32 _color)
     {
         Text* t = RessourceManager::GetText(textId);
         if (t == nullptr) return;

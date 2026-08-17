@@ -15,14 +15,14 @@ private:
 	 {
 	 	struct AccumData
 	     {
-	 	    XMFLOAT3 normal = {0.0f, 0.0f, 0.0f };
-			XMFLOAT3 tangent = {0.0f, 0.0f, 0.0f };
+	 	    Vect3f32 normal = {0.0f, 0.0f, 0.0f };
+			Vect3f32 tangent = {0.0f, 0.0f, 0.0f };
 	     };
 	
 	 	static constexpr float MERGE_EPSILON = 1e-5f;
 	 	
-	 	struct XMFLOAT3Hash {
-	 		size_t operator()(const XMFLOAT3& v) const {
+	 	struct Vect3f32Hash {
+	 		size_t operator()(const Vect3f32& v) const {
 	 			auto quantize = [](float f) { return static_cast<int>(std::round(f / MERGE_EPSILON)); };
 	 			size_t h1 = std::hash<int>{}(quantize(v.x));
 	 			size_t h2 = std::hash<int>{}(quantize(v.y));
@@ -31,16 +31,16 @@ private:
 	 		}
 	 	};
 	
-	 	struct XMFLOAT3Eq
+	 	struct Vect3f32Eq
 	 	{
-	 		bool operator()(const XMFLOAT3& a, const XMFLOAT3& b) const {
+	 		bool operator()(const Vect3f32& a, const Vect3f32& b) const {
 	 			return std::abs(a.x - b.x) <= MERGE_EPSILON &&
 	 				   std::abs(a.y - b.y) <= MERGE_EPSILON &&
 	 				   std::abs(a.z - b.z) <= MERGE_EPSILON;
 	 		}
 	 	};
 	
-	 	UnorderedMap<XMFLOAT3, AccumData, XMFLOAT3Hash, XMFLOAT3Eq> accum;
+	 	UnorderedMap<Vect3f32, AccumData, Vect3f32Hash, Vect3f32Eq> accum;
 	
 	 	uint32 numTriangle = (uint32)_indices.size() / 3;
 	
@@ -54,32 +54,31 @@ private:
 	 	    Vertex& vertex1 = _vertices[i1];
 	 	    Vertex& vertex2 = _vertices[i2];
 	
-	 	    XMVECTOR e0 = XMVectorSubtract(XMLoadFloat3(&vertex1.position), XMLoadFloat3(&vertex0.position));
-	 	    XMVECTOR e1 = XMVectorSubtract(XMLoadFloat3(&vertex2.position), XMLoadFloat3(&vertex0.position));
+	 	    Vect3f32 e0 = vertex1.position - vertex0.position;
+	 	    Vect3f32 e1 = vertex2.position - vertex0.position;
 	
-	 	    XMVECTOR normal = XMVector3Cross(e0, e1);
+	 	    Vect3f32 normal = e0.Cross(e1);
 	
-	 	    XMFLOAT2 deltaUV1 = { vertex1.uv.x - vertex0.uv.x, vertex1.uv.y - vertex0.uv.y };
-	 	    XMFLOAT2 deltaUV2 = { vertex2.uv.x - vertex0.uv.x, vertex2.uv.y - vertex0.uv.y };
+	 	    Vect2f32 deltaUV1 = { vertex1.uv.x - vertex0.uv.x, vertex1.uv.y - vertex0.uv.y };
+	 	    Vect2f32 deltaUV2 = { vertex2.uv.x - vertex0.uv.x, vertex2.uv.y - vertex0.uv.y };
 	
-	 	    XMVECTOR tangent = XMVectorZero();
+	 	    Vect3f32 tangent;
 	 	    float denom = (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 	 	    if (std::abs(denom) >= 1e-6f)
 	 	    {
 	 	        float f = 1.0f / denom;
-	 	        XMFLOAT3 t;
-	 	        t.x = f * (deltaUV2.y * XMVectorGetX(e0) - deltaUV1.y * XMVectorGetX(e1));
-	 	        t.y = f * (deltaUV2.y * XMVectorGetY(e0) - deltaUV1.y * XMVectorGetY(e1));
-	 	        t.z = f * (deltaUV2.y * XMVectorGetZ(e0) - deltaUV1.y * XMVectorGetZ(e1));
-	 	        tangent = XMLoadFloat3(&t);
+	 	        Vect3f32 t;
+	 	        tangent.x = f * (deltaUV2.y * e0.x - deltaUV1.y * e1.x);
+	 	        tangent.y = f * (deltaUV2.y * e0.y - deltaUV1.y * e1.y);
+	 	        tangent.z = f * (deltaUV2.y * e0.z - deltaUV1.y * e1.z);
 	 	    }
 	
 	 	    // Accumulate directly into the map for all 3 vertices
 	 	    for (uint32 idx : { i0, i1, i2 })
 	 	    {
 	 	        AccumData& data = accum[_vertices[idx].position];
-	 	        XMStoreFloat3(&data.normal,  XMVectorAdd(XMLoadFloat3(&data.normal),  normal));
-	 	        XMStoreFloat3(&data.tangent, XMVectorAdd(XMLoadFloat3(&data.tangent), tangent));
+	 	        data.normal += normal;
+	 	        data.tangent += tangent;
 	 	    }
 	 	}
 	
@@ -87,13 +86,14 @@ private:
 	 	{
 	 	    AccumData& data = accum[_vertices[i].position];
 	
-	 	    XMVECTOR N = XMVector3Normalize(XMLoadFloat3(&data.normal));
-	 	    XMVECTOR T = XMLoadFloat3(&data.tangent);
+	 	    Vect3f32 N = data.normal.Normalized();
+	 	    Vect3f32 T = data.tangent;
+			
+	 		T = T - (T.Dot(N) * N);
+	 		T = T.Normalized();
 	
-	 	    T = XMVector3Normalize(XMVectorSubtract(T, XMVectorMultiply(XMVector3Dot(T, N), N)));
-	
-	 	    XMStoreFloat3(&_vertices[i].normal,  N);
-	 	    XMStoreFloat3(&_vertices[i].tangent, T);
+	 	    _vertices[i].normal  = N;
+	 	    _vertices[i].tangent = T;
 	 	}
 	
 	 	return _vertices;
@@ -102,7 +102,7 @@ private:
 	static Vector<Vertex> CalculateNormalsAndTangents(Vector<Vertex>& _vertices, const Vector<uint32>& _indices)
 	{
 		// 1. Utiliser un vecteur simple au lieu d'une map (beaucoup plus rapide)
-		struct Accum { XMVECTOR n = XMVectorZero(); XMVECTOR t = XMVectorZero(); };
+		struct Accum { Vect3f32 n = {0.0f, 0.0f, 0.0f}; Vect3f32 t = {0.0f, 0.0f, 0.0f}; };
 		std::vector<Accum> accum(_vertices.size());
 	
 		// 2. Premier passage : Accumulation par face
@@ -111,18 +111,18 @@ private:
 			uint32 i0 = _indices[i], i1 = _indices[i+1], i2 = _indices[i+2];
 			Vertex& v0 = _vertices[i0]; Vertex& v1 = _vertices[i1]; Vertex& v2 = _vertices[i2];
 	
-			XMVECTOR p0 = XMLoadFloat3(&v0.position), p1 = XMLoadFloat3(&v1.position), p2 = XMLoadFloat3(&v2.position);
-			XMVECTOR e1 = p1 - p0, e2 = p2 - p0;
+			Vect3f32 p0 = v0.position, p1 = v1.position, p2 = v2.position;
+			Vect3f32 e1 = p1 - p0, e2 = p2 - p0;
 	
 			// Normale de la face (non normalisée pour pondérer par l'aire de la face)
-			XMVECTOR faceNormal = XMVector3Cross(e1, e2);
+			Vect3f32 faceNormal = e1.Cross(e2);
 	
 			// Tangente
 			float du1 = v1.uv.x - v0.uv.x, dv1 = v1.uv.y - v0.uv.y;
 			float du2 = v2.uv.x - v0.uv.x, dv2 = v2.uv.y - v0.uv.y;
 			float f = 1.0f / (du1 * dv2 - du2 * dv1);
 	
-			XMVECTOR faceTangent = f * (dv2 * e1 - dv1 * e2);
+			Vect3f32 faceTangent = f * (dv2 * e1 - dv1 * e2);
 	
 			for (uint32 idx : {i0, i1, i2}) {
 				accum[idx].n += faceNormal;
@@ -133,39 +133,28 @@ private:
 		// 3. Second passage : Orthogonalisation et stockage
 		for (size_t i = 0; i < _vertices.size(); i++)
 		{
-			XMVECTOR N = XMVector3Normalize(accum[i].n);
-			XMVECTOR T = accum[i].t;
+			Vect3f32 N = accum[i].n.Normalized();
+			Vect3f32 T = accum[i].t;
 	
 			// Gram-Schmidt : T' = Normalize(T - (N.T) * N)
-			T = XMVector3Normalize(T - XMVector3Dot(T, N) * N);
+			T = (T - T.Dot(N) * N).Normalized();
 	
-			XMStoreFloat3(&_vertices[i].normal, N);
+			_vertices[i].normal = N;
 			// On stocke souvent la tangente en float4 (x, y, z, w) pour la bitangente
-			XMStoreFloat3(&_vertices[i].tangent, T); 
+			_vertices[i].tangent = T; 
 		}
 	
 		return _vertices;
 	}
 
-	static XMFLOAT3 Normalize(const XMFLOAT3& v, float radius)
-	{
-		XMVECTOR vec = XMLoadFloat3(&v);
-		vec = XMVector3Normalize(vec) * radius;
-
-		XMFLOAT3 out;
-		XMStoreFloat3(&out, vec);
-		return out;
-	}
-
 	static Vertex MidPoint(Vertex const& v0, Vertex const& v1)
 	{
-
-		XMFLOAT3 pos;
+		Vect3f32 pos;
 		pos.x = ( v0.position.x + v1.position.x ) * 0.5f;
 		pos.y = ( v0.position.y + v1.position.y ) * 0.5f;
 		pos.z = ( v0.position.z + v1.position.z ) * 0.5f;
 
-		XMFLOAT2 uv;
+		Vect2f32 uv;
 		uv.x = (v0.uv.x + v1.uv.x) * 0.5f;
 		uv.y = (v0.uv.y + v1.uv.y) * 0.5f;
 
@@ -221,11 +210,11 @@ private:
 	static void Circle(Vector<Vertex>& vertices, Vector<uint32>& indices, int _stackCount, float _posY, bool _isTop)
 	{
 		vertices.push_back(
-			Vertex{ XMFLOAT3(0.0f, _posY, 0.0f), XMFLOAT2(0.5f, 0.5f) }
+			Vertex{ Vect3f32(0.0f, _posY, 0.0f), Vect2f32(0.5f, 0.5f) }
 		);
 
 		int indexCenter = (UINT)vertices.size() - 1;
-		float angle = XM_PI / (float)_stackCount * 2.0f;
+		float angle = MathUtils::PI / (float)_stackCount * 2.0f;
     	
 		for (int i = 0; i < _stackCount + 1; ++i)
 		{
@@ -234,8 +223,8 @@ private:
 			float posX = c * 0.5f;
 			float posZ = s * 0.5f;
 
-			XMFLOAT2 uv = { 0.5f + c * 0.5f, 0.5f + s * 0.5f };
-			vertices.push_back(Vertex{ XMFLOAT3(posX, _posY, posZ), uv });
+			Vect2f32 uv = { 0.5f + c * 0.5f, 0.5f + s * 0.5f };
+			vertices.push_back(Vertex{ Vect3f32(posX, _posY, posZ), uv });
 		}
 		for (int i = indexCenter; i < indexCenter + _stackCount; ++i)
 		{
@@ -253,6 +242,31 @@ private:
 		}
 	}
 public:
+
+	static Geometry* BuildLine(Device* _pDevice, bool _isDynamic = false)
+	{
+		Geometry* pGeometry = _pDevice->CreateGeometry(_isDynamic);
+
+		Vector<Vertex> vertices;
+		Vector<uint32> indices;
+
+		vertices = {
+			Vertex{Vect3f32(0.0f, 0.0f, 0.0f), Vect2f32(0.0f, 0.0f)},
+			Vertex{Vect3f32(1.0f, 0.0f, 0.0f), Vect2f32(1.0f, 0.0f)}
+		};
+
+		indices = {
+			0, 1
+		};
+
+		pGeometry->SetVertexData(vertices.data(), 2);
+		pGeometry->SetIndexData(indices.data(), 2);
+
+		pGeometry->SetPrimitiveTopology(PrimitiveTopology::LineList);
+		
+		return pGeometry;
+	}
+	
 	////////////////////////////////////////////
 	//// PYRAMID
 	////////////////////////////////////////////
@@ -267,28 +281,28 @@ public:
 
     	vertices = {
     		// Front face
-    		Vertex{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 1.0f)},
+    		Vertex{Vect3f32(-0.5f, -0.5f, -0.5f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f, -0.5f), Vect2f32(1.0f, 1.0f)},
 
     		// Right Face
-			Vertex{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT2(0.0f, 1.0f)},
-    		Vertex{XMFLOAT3( 0.5f, -0.5f, 00.5f), XMFLOAT2(1.0f, 1.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f, -0.5f), Vect2f32(0.0f, 1.0f)},
+    		Vertex{Vect3f32( 0.5f, -0.5f, 00.5f), Vect2f32(1.0f, 1.0f)},
 
     		// Back Face
-    		Vertex{XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3( -0.5f, -0.5f, 0.5f), XMFLOAT2(1.0f, 1.0f)},
+    		Vertex{Vect3f32(0.5f, -0.5f, 0.5f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32( -0.5f, -0.5f, 0.5f), Vect2f32(1.0f, 1.0f)},
 
 			// Left Face
-    		Vertex{XMFLOAT3( -0.5f, -0.5f, 0.5f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3( -0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 1.0f)},
+    		Vertex{Vect3f32( -0.5f, -0.5f, 0.5f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32( -0.5f, -0.5f, -0.5f), Vect2f32(1.0f, 1.0f)},
     		
-			Vertex{XMFLOAT3( 0.0f,  0.5f,  0.0f), XMFLOAT2(0.5f, 0.0f)},
+			Vertex{Vect3f32( 0.0f,  0.5f,  0.0f), Vect2f32(0.5f, 0.0f)},
 
     		// Bottom Face
-    		Vertex{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT2(0.0f, 0.0f)},
-			Vertex{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f)},
-    		Vertex{XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT2(1.0f, 1.0f)},
-			Vertex{XMFLOAT3( -0.5f, -0.5f, 0.5f), XMFLOAT2(0.0f, 1.0f)}
+    		Vertex{Vect3f32(-0.5f, -0.5f, -0.5f), Vect2f32(0.0f, 0.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f, -0.5f), Vect2f32(1.0f, 0.0f)},
+    		Vertex{Vect3f32(0.5f, -0.5f, 0.5f), Vect2f32(1.0f, 1.0f)},
+			Vertex{Vect3f32( -0.5f, -0.5f, 0.5f), Vect2f32(0.0f, 1.0f)}
 		};
     	indices = {
     		9, 10, 11,
@@ -321,35 +335,35 @@ public:
 
     	vertices = {
     		// DOWN  (y = -0.5)
-    		Vertex{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT2(0.0f, 0.0f)},
-			Vertex{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 1.0f)},
-			Vertex{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT2(1.0f, 0.0f)},
+    		Vertex{Vect3f32(-0.5f, -0.5f, -0.5f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32(-0.5f, -0.5f,  0.5f), Vect2f32(0.0f, 0.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f, -0.5f), Vect2f32(1.0f, 1.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f,  0.5f), Vect2f32(1.0f, 0.0f)},
 			// UP    (y = +0.5)
-			Vertex{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT2(0.0f, 0.0f)},
-			Vertex{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f)},
-			Vertex{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT2(1.0f, 1.0f)},
+			Vertex{Vect3f32(-0.5f,  0.5f, -0.5f), Vect2f32(0.0f, 0.0f)},
+			Vertex{Vect3f32(-0.5f,  0.5f,  0.5f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32( 0.5f,  0.5f, -0.5f), Vect2f32(1.0f, 0.0f)},
+			Vertex{Vect3f32( 0.5f,  0.5f,  0.5f), Vect2f32(1.0f, 1.0f)},
 			// LEFT  (x = -0.5)
-			Vertex{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 1.0f)},
-			Vertex{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f)},
-			Vertex{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT2(0.0f, 0.0f)},
+			Vertex{Vect3f32(-0.5f, -0.5f, -0.5f), Vect2f32(1.0f, 1.0f)},
+			Vertex{Vect3f32(-0.5f, -0.5f,  0.5f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32(-0.5f,  0.5f, -0.5f), Vect2f32(1.0f, 0.0f)},
+			Vertex{Vect3f32(-0.5f,  0.5f,  0.5f), Vect2f32(0.0f, 0.0f)},
 			// RIGHT (x = +0.5)
-			Vertex{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT2(1.0f, 1.0f)},
-			Vertex{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT2(0.0f, 0.0f)},
-			Vertex{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT2(1.0f, 0.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f, -0.5f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f,  0.5f), Vect2f32(1.0f, 1.0f)},
+			Vertex{Vect3f32( 0.5f,  0.5f, -0.5f), Vect2f32(0.0f, 0.0f)},
+			Vertex{Vect3f32( 0.5f,  0.5f,  0.5f), Vect2f32(1.0f, 0.0f)},
 			// FRONT (z = -0.5)
-			Vertex{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 1.0f)},
-			Vertex{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT2(0.0f, 0.0f)},
-			Vertex{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f)},
+			Vertex{Vect3f32(-0.5f, -0.5f, -0.5f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f, -0.5f), Vect2f32(1.0f, 1.0f)},
+			Vertex{Vect3f32(-0.5f,  0.5f, -0.5f), Vect2f32(0.0f, 0.0f)},
+			Vertex{Vect3f32( 0.5f,  0.5f, -0.5f), Vect2f32(1.0f, 0.0f)},
 			// BACK  (z = +0.5)
-			Vertex{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT2(1.0f, 1.0f)},
-			Vertex{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT2(1.0f, 0.0f)},
-			Vertex{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT2(0.0f, 0.0f)},
+			Vertex{Vect3f32(-0.5f, -0.5f,  0.5f), Vect2f32(1.0f, 1.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f,  0.5f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32(-0.5f,  0.5f,  0.5f), Vect2f32(1.0f, 0.0f)},
+			Vertex{Vect3f32( 0.5f,  0.5f,  0.5f), Vect2f32(0.0f, 0.0f)},
 		};
 
     	indices = {
@@ -387,9 +401,9 @@ public:
     	Vector<uint32> indices;
 
     	vertices = {
-    		Vertex{XMFLOAT3(-0.5f, -0.5f, 0.0f), XMFLOAT2(0.0f, 1.0f)},
-			Vertex{XMFLOAT3( 0.5f, -0.5f, 0.0f), XMFLOAT2(1.0f, 1.0f)},
-			Vertex{XMFLOAT3( 0.0f,  0.5f, 0.0f), XMFLOAT2(0.5f, 0.0f)},
+    		Vertex{Vect3f32(-0.5f, -0.5f, 0.0f), Vect2f32(0.0f, 1.0f)},
+			Vertex{Vect3f32( 0.5f, -0.5f, 0.0f), Vect2f32(1.0f, 1.0f)},
+			Vertex{Vect3f32( 0.0f,  0.5f, 0.0f), Vect2f32(0.5f, 0.0f)},
 		};
     	indices = { 0, 2, 1 };
 
@@ -418,18 +432,18 @@ public:
     	float phi = (0.5f + sqrtf(5.0f)) * 0.5f;
 
     	vertices = {
-    		Vertex{ XMFLOAT3(-0.5f,    0,  phi), XMFLOAT2() },
-			Vertex{ XMFLOAT3(0.5f,    0,  phi), XMFLOAT2() },
-			Vertex{ XMFLOAT3(-0.5f,    0, -phi), XMFLOAT2() },
-			Vertex{ XMFLOAT3(0.5f,    0, -phi), XMFLOAT2() },
-			Vertex{ XMFLOAT3( 0,  phi,    0.5f), XMFLOAT2() },
-			Vertex{ XMFLOAT3( 0,  phi,   -0.5f), XMFLOAT2() },
-			Vertex{ XMFLOAT3( 0, -phi,    0.5f), XMFLOAT2() },
-			Vertex{ XMFLOAT3( 0, -phi,   -0.5f), XMFLOAT2() },
-			Vertex{ XMFLOAT3( phi,  0.5f,    0), XMFLOAT2() },
-			Vertex{ XMFLOAT3(-phi,  0.5f,    0), XMFLOAT2() },
-			Vertex{ XMFLOAT3( phi, -0.5f,    0), XMFLOAT2() },
-			Vertex{ XMFLOAT3(-phi, -0.5f,    0), XMFLOAT2() },
+    		Vertex{ Vect3f32(-0.5f,    0,  phi), Vect2f32() },
+			Vertex{ Vect3f32(0.5f,    0,  phi), Vect2f32() },
+			Vertex{ Vect3f32(-0.5f,    0, -phi), Vect2f32() },
+			Vertex{ Vect3f32(0.5f,    0, -phi), Vect2f32() },
+			Vertex{ Vect3f32( 0,  phi,    0.5f), Vect2f32() },
+			Vertex{ Vect3f32( 0,  phi,   -0.5f), Vect2f32() },
+			Vertex{ Vect3f32( 0, -phi,    0.5f), Vect2f32() },
+			Vertex{ Vect3f32( 0, -phi,   -0.5f), Vect2f32() },
+			Vertex{ Vect3f32( phi,  0.5f,    0), Vect2f32() },
+			Vertex{ Vect3f32(-phi,  0.5f,    0), Vect2f32() },
+			Vertex{ Vect3f32( phi, -0.5f,    0), Vect2f32() },
+			Vertex{ Vect3f32(-phi, -0.5f,    0), Vect2f32() },
 		};
     	indices = {
     		1, 10, 8,   1,  0,  6,   1,  6, 10,   1,  4, 0,   1, 8,  4,
@@ -445,12 +459,12 @@ public:
 
     	for (uint32 i = 0; i < (uint32)vertices.size(); ++i)
     	{
-    		XMFLOAT3 n = Normalize(vertices[i].position, 0.5f);
+    		Vect3f32 n = vertices[i].position.Normalized() * 0.5f;
     		vertices[i].position = { n.x, n.y, n.z };
     		
-    		float u = 0.5f + atan2f(n.z, n.x) / XM_2PI;
-    		float v = 0.5f - asinf(n.y) / XM_PI;
-    		vertices[i].uv = XMFLOAT2(u, v);
+    		float u = 0.5f + atan2f(n.z, n.x) / MathUtils::TWO_PI;
+    		float v = 0.5f - asinf(n.y) / MathUtils::PI;
+    		vertices[i].uv = Vect2f32(u, v);
     	}
 
     	for (uint32 i = 0; i < (uint32)indices.size(); i += 3)
@@ -528,10 +542,10 @@ public:
 	    Vector<uint32> indices;
 
 	    // top pole
-	    vertices.push_back(Vertex{ XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.5f, 0.0f) });
+	    vertices.push_back(Vertex{ Vect3f32(0.0f, 1.0f, 0.0f), Vect2f32(0.5f, 0.0f) });
 
-	    float phiStep   = XM_PI / _stackCount;
-	    float thetaStep = XM_2PI / _sliceCount;
+	    float phiStep   = MathUtils::PI / _stackCount;
+	    float thetaStep = MathUtils::TWO_PI / _sliceCount;
 
 	    for (uint32 i = 1; i < _stackCount; ++i)
 	    {
@@ -540,13 +554,13 @@ public:
 	        {
 	            float theta = j * thetaStep;
 	            Vertex v;
-	            v.position = XMFLOAT3(
+	            v.position = Vect3f32(
 	                sinf(phi) * cosf(theta),
 	                cosf(phi),
 	                sinf(phi) * sinf(theta)
 	            );
-	            v.normal = XMFLOAT3();
-	        	v.uv     = XMFLOAT2(
+	            v.normal = Vect3f32();
+	        	v.uv     = Vect2f32(
 					(float)j / (float)_sliceCount,
 					(float)i / (float)_stackCount
 				);
@@ -555,7 +569,7 @@ public:
 	    }
 
 	    // bottom pole
-	    vertices.push_back(Vertex{ XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.5f, 1.0f) });
+	    vertices.push_back(Vertex{ Vect3f32(0.0f, -1.0f, 0.0f), Vect2f32(0.5f, 1.0f) });
 
 	    // top cap - connect pole to first ring
 	    for (uint32 i = 1; i <= _sliceCount; ++i)
@@ -637,15 +651,15 @@ public:
     	Circle(vertices, indices, _stackCount,  0.5f, true);
 
     	int sideBaseVertex = (int)vertices.size();
-    	float angle = XM_PI / (float)_stackCount * 2.0f;
+    	float angle = MathUtils::PI / (float)_stackCount * 2.0f;
     	for (int i = 0; i <= _stackCount; ++i)
     	{
     		float u  = (float)i / (float)_stackCount;
     		float c  = cosf(angle * (float)i);
     		float s  = sinf(angle * (float)i);
 
-    		vertices.push_back(Vertex{ XMFLOAT3(c * 0.5f, -0.5f, s * 0.5f), XMFLOAT2(u, 1.0f) });
-    		vertices.push_back(Vertex{ XMFLOAT3(c * 0.5f,  0.5f, s * 0.5f), XMFLOAT2(u, 0.0f) });
+    		vertices.push_back(Vertex{ Vect3f32(c * 0.5f, -0.5f, s * 0.5f), Vect2f32(u, 1.0f) });
+    		vertices.push_back(Vertex{ Vect3f32(c * 0.5f,  0.5f, s * 0.5f), Vect2f32(u, 0.0f) });
     	}
 
     	for (int i = 0; i < _stackCount; ++i)
@@ -683,20 +697,20 @@ public:
     	for (uint32 i = 0; i <= _majorSlices; ++i)
     	{
 			float u = (float)i / (float)_majorSlices;
-    		float theta = u * 2.0f * XM_PI;
+    		float theta = u * 2.0f * MathUtils::PI;
     		
     		for (uint32 j = 0; j <= _minorSlices; ++j)
     		{
     			float v = (float)j / (float)_minorSlices;
-    			float phi = v * 2.0f * XM_PI;
+    			float phi = v * 2.0f * MathUtils::PI;
 
-    			float x = (_majorRadius + _minorRadius * XMScalarCos(phi)) * XMScalarCos(theta);
-    			float y = _minorRadius * XMScalarSin(phi);
-    			float z = (_majorRadius + _minorRadius * XMScalarCos(phi)) * XMScalarSin(theta);
+    			float x = (_majorRadius + _minorRadius * MathUtils::Cos(phi)) * MathUtils::Cos(theta);
+    			float y = _minorRadius * MathUtils::Sin(phi);
+    			float z = (_majorRadius + _minorRadius * MathUtils::Cos(phi)) * MathUtils::Sin(theta);
 
     			Vertex vertex;
-    			vertex.position = XMFLOAT3(x, y, z);
-    			vertex.uv = XMFLOAT2(u, v);
+    			vertex.position = Vect3f32(x, y, z);
+    			vertex.uv = Vect2f32(u, v);
 
     			vertices.push_back(vertex);
     		}
@@ -737,8 +751,8 @@ public:
     {
 		Geometry* pGeo = _pDevice->CreateGeometry(_isDynamic);
     	
-    	Vector<XMFLOAT3> rawPositions;
-    	Vector<XMFLOAT2> rawUVs;
+    	Vector<Vect3f32> rawPositions;
+    	Vector<Vect2f32> rawUVs;
     	
     	Vector<Vertex>   vertices;
     	Vector<uint32>   indices;
@@ -747,6 +761,7 @@ public:
     	errno_t err = fopen_s(&file, _path.c_str(), "r");
     	if (err != 0 || file == nullptr)
     	{
+    		// std::cout << "Impossible to open the file: " << _path << '\n';
     		return nullptr;
     	}
 
@@ -759,13 +774,13 @@ public:
 
     		if (strcmp(lineHeader, "v") == 0)
     		{
-    			XMFLOAT3 pos;
+    			Vect3f32 pos;
     			fscanf_s(file, "%f %f %f\n", &pos.x, &pos.y, &pos.z);
     			rawPositions.push_back(pos);
     		}
     		else if (strcmp(lineHeader, "vt") == 0)
     		{
-    			XMFLOAT2 uv;
+    			Vect2f32 uv;
     			fscanf_s(file, "%f %f\n", &uv.x, &uv.y);
     			// Flip V to match DirectX convention (OBJ origin is bottom-left)
     			uv.y = 1.0f - uv.y;
@@ -790,8 +805,8 @@ public:
     			{
     				Vertex v;
     				v.position = rawPositions[posIdx[k] - 1];
-    				v.uv       = rawUVs.empty() ? XMFLOAT2() : rawUVs[uvIdx[k] - 1];
-    				v.normal   = XMFLOAT3();
+    				v.uv       = rawUVs.empty() ? Vect2f32() : rawUVs[uvIdx[k] - 1];
+    				v.normal   = Vect3f32();
     				indices.push_back((uint32)vertices.size());
     				vertices.push_back(v);
     			}
@@ -822,7 +837,7 @@ public:
     		Vertex vertex;
     		
     		// Position from vertex index
-    		XMFLOAT3 pos;
+    		Vect3f32 pos;
     		pos.x = vVertices[vIndex * 3 + 0].get<float>();
     		pos.y = vVertices[vIndex * 3 + 2].get<float>();
     		pos.z = vVertices[vIndex * 3 + 1].get<float>();
@@ -830,7 +845,7 @@ public:
 
     		
     		// UV from loop index
-    		XMFLOAT2 texCoord;
+    		Vect2f32 texCoord;
     		texCoord.x = -uvs[i * 2 + 0].get<float>();
     		texCoord.y = uvs[i * 2 + 1].get<float>();
 			vertex.uv = texCoord;

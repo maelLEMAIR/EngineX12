@@ -38,28 +38,28 @@ public:
     virtual void RunComputeShader(ComputeShader* _pComputeShader, bool _isOnRT = false) = 0;
 
     virtual void Blit(RenderTarget* _pRt = nullptr) = 0;
-    virtual void Draw(Geometry* _geo, XMFLOAT4X4& _mat) = 0;
-    virtual void DrawUi(Sprite* _sprite, XMFLOAT4X4& _mat) = 0;
-    virtual void DrawRenderText(Text* _text, XMFLOAT4X4& _mat) = 0;
+    virtual void Draw(Geometry* _geo, Mat4f32 const& _mat) = 0;
+    virtual void DrawUi(Sprite* _sprite, Mat4f32 const& _mat) = 0;
+    virtual void DrawRenderText(Text* _text, Mat4f32 const& _mat) = 0;
 
     void SetMaterial(Material* _material) { m_pCurrMaterial = _material; }
     void SetUiMaterial(UiMaterial* _material) { m_pCurrUiMaterial = _material; }
     void SetMainCamera(Camera* _pCamera) { m_pMainCamera = _pCamera; }
-    void SetClearColor(XMFLOAT3 _color) { m_clearColor = _color; }
+    void SetClearColor(Vect3f32 const& _color) { m_clearColor = _color; }
 
     RenderTarget* GetBlitRT() { return m_blitRT; } 
     
     virtual void SetLights(Vector<LightDescriptor>& _vLights) = 0;
     
-    virtual RenderTarget* CreateRenderTarget(int _width, int _height)                               = 0;
-    virtual Geometry* CreateGeometry(bool _isDynamic = false)                                       = 0;
-    virtual Sprite*   CreateSprite(bool _isDynamic = false)                                         = 0;
-    virtual Texture* CreateTexture(WString const& _path)                                            = 0;
-    virtual Shader* CreateShader(WString const& _path, ShaderFormat _format, bool _isLit = false)   = 0; 
-    virtual UiShader* CreateUiShader(WString const& _path, ShaderFormat _format)                    = 0;
-    virtual ComputeShader* CreateComputeShader(WString const& _path)                                = 0;
-    virtual RenderFont* CreateRenderFont(WString const& _path, float _fontSize = 1.0f)              = 0;
-    virtual Text* CreateText(RenderFont* _pFont)                                                    = 0;
+    virtual RenderTarget* CreateRenderTarget(int _width, int _height)                                           = 0;
+    virtual Geometry* CreateGeometry(bool _isDynamic = false)                                                   = 0;
+    virtual Sprite*   CreateSprite(bool _isDynamic = false)                                                     = 0;
+    virtual Texture* CreateTexture(WString const& _path)                                                        = 0;
+    virtual Shader* CreateShader(WString const& _path, ShaderFormat _format, ShaderDescriptor _desc = {})       = 0; 
+    virtual UiShader* CreateUiShader(WString const& _path, ShaderFormat _format, ShaderDescriptor _desc = {})   = 0;
+    virtual ComputeShader* CreateComputeShader(WString const& _path)                                            = 0;
+    virtual RenderFont* CreateRenderFont(WString const& _path, float _fontSize = 1.0f)                          = 0;
+    virtual Text* CreateText(RenderFont* _pFont)                                                                = 0;
 
 protected:
     RenderTarget* m_pRenderTarget = nullptr;
@@ -70,7 +70,7 @@ protected:
     Material* m_pCurrMaterial = nullptr;
     UiMaterial* m_pCurrUiMaterial = nullptr;
     
-    XMFLOAT3 m_clearColor = XMFLOAT3(0.1f, 0.1f, 0.1f);
+    Vect3f32 m_clearColor = Vect3f32(0.1f);
     
     virtual void SetViewport(int _width, int _height) = 0;
 

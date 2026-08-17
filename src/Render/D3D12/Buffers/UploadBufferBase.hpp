@@ -107,7 +107,7 @@ public:
         assert(*reinterpret_cast<const volatile BYTE*>(data) || true);               // first byte
         assert(*reinterpret_cast<const volatile BYTE*>((const BYTE*)data + m_elementByteSize - 1) || true); // last byte
         
-        m_firstAvailableIndex = MathHelper::Max(elementIndex + 1, m_firstAvailableIndex);
+        m_firstAvailableIndex = MathUtils::Max(elementIndex + 1, m_firstAvailableIndex);
         
         memcpy(&m_mappedData[elementIndex * m_elementByteSize], data, 
         m_elementByteSize);

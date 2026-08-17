@@ -13,7 +13,7 @@ public:
     void SetString(const String& _str)          { m_string = _str;     m_dirty = true; }
     void SetPosition(float _x, float _y)        { m_x = _x; m_y = _y; m_dirty = true; }
     void SetFont(RenderFont* _font)              { m_font = _font;      m_dirty = true; }
-    void SetColor(float _r, float _g, float _b) { m_color = XMFLOAT4(_r, _g, _b, 1.0f); m_dirty = true; }
+    void SetColor(float _r, float _g, float _b) { m_color = Vect4f32(_r, _g, _b, 1.0f); m_dirty = true; }
 
     RenderFont* GetFont() { return m_font; }
     
@@ -31,7 +31,7 @@ protected:
     float       m_x       = 0.0f;
     float       m_y       = 0.0f;
     bool        m_dirty   = true;
-    XMFLOAT4    m_color   = XMFLOAT4(1, 1, 1, 1);
+    Vect4f32    m_color   = Vect4f32(1.0f, 1.0f, 1.0f, 1.0f);
 };
 
 #endif

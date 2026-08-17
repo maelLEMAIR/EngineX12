@@ -27,16 +27,16 @@ public:
 
     void RunComputeShader(ComputeShader* _pComputeShader, bool _isOnRT) override;
     
-    void Draw(Geometry* _geo, XMFLOAT4X4& _mat) override;
-    void DrawUi(Sprite* _sprite, XMFLOAT4X4& _mat) override;
-    void DrawRenderText(Text* _text, XMFLOAT4X4& _mat) override;
+    void Draw(Geometry* _geo, Mat4f32 const& _mat) override;
+    void DrawUi(Sprite* _sprite, Mat4f32 const& _mat) override;
+    void DrawRenderText(Text* _text, Mat4f32 const& _mat) override;
 
     void SetViewport(int _width, int _height) override;
 
     void SetLights(Vector<LightDescriptor>& _vLights) override;
 
-    Shader* CreateShader(WString const& _path, ShaderFormat _format, bool _isLit = false) override;
-    UiShader* CreateUiShader(WString const& _path, ShaderFormat _format) override;
+    Shader* CreateShader(WString const& _path, ShaderFormat _format, ShaderDescriptor _desc = {}) override;
+    UiShader* CreateUiShader(WString const& _path, ShaderFormat _format, ShaderDescriptor _desc = {}) override;
     Geometry* CreateGeometry(bool _isDynamic = false) override;
     Sprite* CreateSprite(bool _isDynamic) override;
     RenderTarget* CreateRenderTarget(int _width, int _height) override;
@@ -51,7 +51,7 @@ private:
     D3D12_VIEWPORT m_screenViewport; 
     D3D12_RECT m_scissorRect;
 
-    Vector<UploadBuffer<XMFLOAT4X4>*> m_vPerObjectBuffers;
+    Vector<UploadBuffer<Mat4f32>*> m_vPerObjectBuffers;
     int m_objCbIndex = 0;
     
     PassData m_passData;
@@ -62,7 +62,7 @@ private:
 
     UiShader* m_blitShader = nullptr;
 
-    D3D12_GPU_VIRTUAL_ADDRESS GetObjectCBAdress(XMFLOAT4X4 _mat);
+    D3D12_GPU_VIRTUAL_ADDRESS GetObjectCBAdress(Mat4f32 const& _mat);
     void ResetPerObjectBuffers();
     
     friend class D3D12RenderTarget;

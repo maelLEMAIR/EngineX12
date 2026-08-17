@@ -154,7 +154,7 @@ Device* Window::Clear()
     return m_pDevice;
 }
 
-Device* Window::Clear(XMFLOAT3 _color)
+Device* Window::Clear(Vect3f32 const& _color)
 {
     assert(m_pDevice != nullptr && "Can't draw without device");
     assert(m_pSwapChain != nullptr && "Can't draw without swapchain");
@@ -198,7 +198,7 @@ void Window::SetSize(int _width, int _height)
 
 float Window::GetAspectRatio()
 {
-    return MathHelper::Min(10.0f, (float)m_width / (float)m_height);
+    return MathUtils::Min(10.0f, (float)m_width / (float)m_height);
 }
 
 LRESULT Window::HandleMessage(UINT _msg, WPARAM _wParam, LPARAM _lParam)

@@ -15,7 +15,7 @@ void CameraSystem::Update(World& world, float _dt)
         Device* d = EngineManager::GetInstance().GetDevice();
 
         
-        cam->SetWorld(_transform.world.GetMatrix());
+        cam->SetWorld(_transform.world.ToMat4f32());
         if (_camera.isMainCamera)
         {
             d->SetMainCamera(cam);
