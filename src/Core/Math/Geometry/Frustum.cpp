@@ -71,7 +71,7 @@ Frustum::Frustum(Mat4f32 const& _vp, bool _isGl)
     {
         Vect3f32 normal(raw[i].x, raw[i].y, raw[i].z);
         float len = normal.Length();
-        planes[i] = Plane(normal / len, raw[i].w / len);
+        planes[i] = Plane(normal / len, -raw[i].w / len);
     }
 }
 

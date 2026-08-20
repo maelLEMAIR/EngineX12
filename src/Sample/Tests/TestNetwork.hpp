@@ -105,7 +105,7 @@ private:
 
         EntityId camera = world.CreateEntity();
         TransformComponent& transformCamera = world.AddComponent<TransformComponent>(camera);
-        transformCamera.local.SetPosition(XMFLOAT3(0.0f, 0.0f, -10.0f));
+        transformCamera.local.SetPosition(Vect3f32(0.0f, 0.0f, -10.0f));
         CameraComponent& cam = world.AddComponent<CameraComponent>(camera);
         cam.camId = RessourceManager::GetCameraId("Default");
         cam.isMainCamera = true;
@@ -158,7 +158,7 @@ private:
 
             if (t && flag)
             {
-                t->local.pos.x += 1.f;
+                t->local.Move(Vect3f32(1.f, 0.f, 0.f));
                 flag->Mark(0);
             }
         }

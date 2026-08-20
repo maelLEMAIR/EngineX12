@@ -20,7 +20,7 @@ void MeshRendererSystem::Update(World& world, float deltaTime)
         if (mat == nullptr || geo == nullptr) return;
 
         pDevice->SetMaterial(mat);
-        pDevice->Draw(geo, _transform.world.ToMat4f32());
+        pDevice->Draw(geo, _transform.world.GetMatrix());
     });
 }
 

@@ -19,19 +19,19 @@ class MainScene : public Scene
         renderer.geoId = RessourceManager::GetGeometryId("XWING");
         renderer.materialId = RessourceManager::GetMaterialId("Default");
         transformComp = &world.AddComponent<TransformComponent>(e1);
-        transformComp->world.pos = { 0.0f, 0.0f, 5.0f};
+        transformComp->world.SetPosition(Vect3f32(0.0f, 0.0f, 5.0f));
 
         EntityId camera = world.CreateEntity();
         TransformComponent& t = world.AddComponent<TransformComponent>(camera);
-        t.local.SetPosition(XMFLOAT3(0.0f, 5.0f, -10.0f));
-        t.local.AddYPR({0.0f, XM_PI / 8, 0.0f});
+        t.local.SetPosition(Vect3f32(0.0f, 5.0f, -10.0f));
+        t.local.AddYPR(Vect3f32(0.0f, MathUtils::PI / 8, 0.0f));
         CameraComponent& cam = world.AddComponent<CameraComponent>(camera);
         cam.camId = RessourceManager::GetCameraId("Default");
         cam.isMainCamera = true;
 
         EntityId light = world.CreateEntity();
         TransformComponent& lt = world.AddComponent<TransformComponent>(light);
-        lt.local.SetPosition(XMFLOAT3(0.0f, 15.0f,5.0f));
+        lt.local.SetPosition(Vect3f32(0.0f, 15.0f,5.0f));
         LightComponent& l = world.AddComponent<LightComponent>(light);
         l.type = LightType::Point;
         l.SetStrength(10.0f);
@@ -44,17 +44,17 @@ class MainScene : public Scene
     void OnUpdate(float _dt) override
     {
         if (InputManager::IsKeyPressed(Q))
-            transformComp->local.Move( transformComp->local.right, -50.0f * _dt);
+            transformComp->local.Move( transformComp->local.GetRight(), -50.0f * _dt);
         if (InputManager::IsKeyPressed(D))
-            transformComp->local.Move( transformComp->local.right, 50.0f * _dt);
+            transformComp->local.Move( transformComp->local.GetRight(), 50.0f * _dt);
         if (InputManager::IsKeyPressed(Z))
-            transformComp->local.Move( transformComp->local.forward, 50.0f * _dt);
+            transformComp->local.Move( transformComp->local.GetForward(), 50.0f * _dt);
         if (InputManager::IsKeyPressed(S))
-            transformComp->local.Move( transformComp->local.forward, -50.0f * _dt);
+            transformComp->local.Move( transformComp->local.GetForward(), -50.0f * _dt);
         if (InputManager::IsKeyPressed(LEFT_ARROW))
-            transformComp->local.AddYPR({XM_PI / 32.0f, 0.0f, 0.0f});
+            transformComp->local.AddYPR(Vect3f32(MathUtils::PI / 32.0f, 0.0f, 0.0f));
         if (InputManager::IsKeyPressed(RIGHT_ARROW))
-            transformComp->local.AddYPR({XM_PI / -32.0f, 0.0f, 0.0f});
+            transformComp->local.AddYPR(Vect3f32(MathUtils::PI / -32.0f, 0.0f, 0.0f));
     }
 };
 

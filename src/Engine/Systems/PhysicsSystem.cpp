@@ -1,12 +1,6 @@
 #include "PhysicsSystem.h"
 #include "../ECS/World.h"
 
-namespace
-{
-    Vect3f32 ToVect3(XMFLOAT3 const& _v) { return Vect3f32(_v.x, _v.y, _v.z); }
-    XMFLOAT3 ToXM(Vect3f32 const& _v)    { return XMFLOAT3(_v.x, _v.y, _v.z); }
-}
-
 void PhysicsSystem::OnRegister(World& world)
 {
     System::OnRegister(world);
@@ -45,7 +39,7 @@ void PhysicsSystem::Update(World& world, float deltaTime)
         if (transform == nullptr)
             continue;
 
-        transform->local.SetPosition(ToXM(body.position));
+        transform->local.SetPosition(body.position);
     }
 }
 
@@ -64,7 +58,7 @@ bool PhysicsSystem::AddToPhysicWorld(World& world, EntityId _entity)
     world.GetSystem<TransformSystem>()->Sync(world, _entity);
 
     RigidBody desc;
-    desc.position = ToVect3(transform->world.pos);
+    desc.position = transform->world.GetPosition();
     desc.linearVelocity = rb->initialVelocity;
     desc.invMass = rb->isStatic ? 0.0f : rb->invMass;
     desc.restitution = rb->restitution;

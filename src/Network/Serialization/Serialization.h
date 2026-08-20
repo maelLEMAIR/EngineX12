@@ -2,6 +2,7 @@
 #define SERIALIZATION_H_INCLUDED
 
 #include "Core/define.h"
+#include "Core/Math/Matrix/Matrix.h"
 
 namespace Serialization
 {
@@ -23,6 +24,7 @@ namespace Serialization
         bool write(int32 data); 
         bool write(float32 data);
         bool write(const XMFLOAT4X4& data);
+        bool write(const Mat4f32& data);
         template <class CONTAINER>
         bool writeContainer(const CONTAINER& container);
 

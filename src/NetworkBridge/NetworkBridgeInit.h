@@ -17,21 +17,25 @@ namespace NetworkBridge
                 TransformComponent* t = world.GetComponent<TransformComponent>(id);
                 if (!t) return;
 
-                d.read(t->local.pos.x);
-                d.read(t->local.pos.y);
-                d.read(t->local.pos.z);
+                Vect3f32 pos, scale;
+                Quaternion quat;
 
-                d.read(t->local.scale.x);
-                d.read(t->local.scale.y);
-                d.read(t->local.scale.z);
+                d.read(pos.x);
+                d.read(pos.y);
+                d.read(pos.z);
 
-                d.read(t->local.quat.x);
-                d.read(t->local.quat.y);
-                d.read(t->local.quat.z);
-                d.read(t->local.quat.w);
+                d.read(scale.x);
+                d.read(scale.y);
+                d.read(scale.z);
 
-                t->local.UpdateRotationFromQuaternion();
-                t->local.UpdateMatrix();
+                d.read(quat.x);
+                d.read(quat.y);
+                d.read(quat.z);
+                d.read(quat.w);
+
+                t->local.SetPosition(pos);
+                t->local.SetScale(scale);
+                t->local.SetRotationQuaternion(quat);
             }
         );
     }

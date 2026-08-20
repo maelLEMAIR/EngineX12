@@ -76,6 +76,17 @@ namespace Serialization
         }
         return true;
     }
+
+    bool Serializer::write(const Mat4f32& data)
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            if (!write(data.rows[i].x) || !write(data.rows[i].y) ||
+                !write(data.rows[i].z) || !write(data.rows[i].w))
+                return false;
+        }
+        return true;
+    }
 }
 
 #endif

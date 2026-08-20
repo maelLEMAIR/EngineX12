@@ -2,6 +2,7 @@
 #define DESERIALIZATION_H_INCLUDED
 
 #include "define.h"
+#include "Core/Math/Matrix/Matrix.h"
 
 namespace Serialization
 {
@@ -19,6 +20,7 @@ namespace Serialization
         bool read(int32& data); 
         bool read(float32& data);
         bool read(XMFLOAT4X4& data);
+        bool read(Mat4f32& data);
         bool read(char& data) { return read(reinterpret_cast<uint8&>(data)); }
         bool read(std::string& data) { return readContainer(data); }
         

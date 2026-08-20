@@ -58,7 +58,7 @@ public:
                 s.write(identity.networkId);
                 s.write(identity.isOwner);
 
-                s.write(t.local.matrix);
+                s.write(t.local.GetMatrix());
             }
         );
 

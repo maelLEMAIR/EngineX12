@@ -12,9 +12,9 @@
 struct TransformSnapshot
 {
     float timestamp;
-    XMFLOAT3 pos;
-    XMFLOAT3 scale;
-    XMFLOAT4 quat;
+    Vect3f32 pos;
+    Vect3f32 scale;
+    Quaternion quat;
 };
 
 struct NetworkInterpolator
@@ -28,8 +28,8 @@ struct NetworkInterpolator
         return (std::max)(0.1f, latency * 2.f);
     }
 
-    void AddSnapshot(const XMFLOAT3& pos, const XMFLOAT3& scale,
-                     const XMFLOAT4& quat, float timestamp)
+    void AddSnapshot(const Vect3f32& pos, const Vect3f32& scale,
+                     const Quaternion& quat, float timestamp)
     {
         buffer.push_back({ timestamp, pos, scale, quat });
         if (buffer.size() > MAX_BUFFER_SIZE)

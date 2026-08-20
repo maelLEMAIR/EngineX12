@@ -662,9 +662,9 @@ Matrix4<T> Matrix4<T>::MakePerspective(float _fov, float _aspectRatio, float _ne
 {
     float _00 = 1.0f / (_aspectRatio * MathUtils::Tan(_fov / 2));
     float _11 = 1.0f / MathUtils::Tan(_fov / 2);
-    float _22 = -(_near + _far) / (_near - _far);
+    float _22 = _far / (_far - _near);
     float _23 = 1.0f;
-    float _32 = -(2.0f * _far * _near) / (_far - _near);
+    float _32 = -(_near * _far) / (_far - _near);
     
     return {
         {  _00, T(0), T(0), T(0) },

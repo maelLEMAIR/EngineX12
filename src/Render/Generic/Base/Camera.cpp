@@ -73,7 +73,7 @@ void Camera::UpdateMatrices()
     m_viewProj = m_view * m_proj;
     m_frustum = Frustum(m_viewProj);
     m_viewProj.SelfTranspose(); // Transposed for the hlsl
-    
+
     m_pos = {m_world.m30, m_world.m31, m_world.m32};
 }
 

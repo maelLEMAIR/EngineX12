@@ -37,10 +37,10 @@ void NetworkSyncSystem::SendDirtyComponents(World& world, EntityId id,
             s.write(networkId);
             s.write((uint32)0x01);
 
-            s.write(t->local.pos.x);   s.write(t->local.pos.y);   s.write(t->local.pos.z);
-            s.write(t->local.scale.x); s.write(t->local.scale.y); s.write(t->local.scale.z);
-            s.write(t->local.quat.x);  s.write(t->local.quat.y);
-            s.write(t->local.quat.z);  s.write(t->local.quat.w);
+            s.write(t->local.GetPosition().x);   s.write(t->local.GetPosition().y);   s.write(t->local.GetPosition().z);
+            s.write(t->local.GetScale().x); s.write(t->local.GetScale().y); s.write(t->local.GetScale().z);
+            s.write(t->local.GetRotation().x);  s.write(t->local.GetRotation().y);
+            s.write(t->local.GetRotation().z);  s.write(t->local.GetRotation().w);
 
             for (const auto& peer : m_net->GetPeers())
                 m_net->SendTo(s.GetBuffer(), peer);

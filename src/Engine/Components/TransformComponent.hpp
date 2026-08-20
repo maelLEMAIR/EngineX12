@@ -2,12 +2,12 @@
 #define TRANSFORM_COMPONENT_HPP_DEFINED
 
 #include "define.h"
-#include "../Core/TransformD3D.h"
+#include "../Core/Transform.h"
 
 struct TransformComponent
 {
-    TransformD3D local;
-    TransformD3D world;
+    Transform local;
+    Transform world;
 
     EntityId parent;
     bool hasParent = false;

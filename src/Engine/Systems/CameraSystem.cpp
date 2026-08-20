@@ -15,11 +15,10 @@ void CameraSystem::Update(World& world, float _dt)
         Device* d = EngineManager::GetInstance().GetDevice();
 
         
-        cam->SetWorld(_transform.world.ToMat4f32());
+        cam->SetWorld(_transform.world.GetMatrix());
         if (_camera.isMainCamera)
         {
             d->SetMainCamera(cam);
-            _transform.world.dirty &= ~(uint8)DIRTY_FLAG::WORLD;
         }
     });
 }

@@ -21,9 +21,9 @@ World::World()
     m_systemManager.RegisterSystem<ScriptSystem>(       *this, -1);
     m_systemManager.RegisterSystem<PhysicsSystem>(      *this, 0);
     m_systemManager.RegisterSystem<TransformSystem>(    *this, 1);
-    m_systemManager.RegisterSystem<MeshRendererSystem>( *this, 2);
-    m_systemManager.RegisterSystem<CameraSystem>(       *this, 3);
-    m_systemManager.RegisterSystem<LightSystem>(        *this, 4);
+    m_systemManager.RegisterSystem<CameraSystem>(       *this, 2);
+    m_systemManager.RegisterSystem<LightSystem>(        *this, 3);
+    m_systemManager.RegisterSystem<MeshRendererSystem>( *this, 4);
 }
 
 World::~World() 

@@ -140,10 +140,10 @@ void PacketHandler::HandleInput(Serialization::Deserializeration& d, World& worl
     }
     
     float speed = 100.0f * m_deltaTime;
-    if (input.moveForward)  t->local.Move(t->local.forward, speed);
-    if (input.moveBackward) t->local.Move(t->local.forward, -speed);
-    if (input.moveLeft)     t->local.Move(t->local.right, -speed);
-    if (input.moveRight)    t->local.Move(t->local.right, speed);
+    if (input.moveForward)  t->local.Move(t->local.GetForward(), speed);
+    if (input.moveBackward) t->local.Move(t->local.GetForward(), -speed);
+    if (input.moveLeft)     t->local.Move(t->local.GetRight(), -speed);
+    if (input.moveRight)    t->local.Move(t->local.GetRight(), speed);
 
     flag->Mark(0);
 }
@@ -161,20 +161,18 @@ void PacketHandler::HandleComponentUpdate(Serialization::Deserializeration& d, W
         if (!NetworkRegistry::Get().HasNetworkId(networkId)) return;
         EntityId localId = NetworkRegistry::Get().GetLocalId(networkId);
 
-        XMFLOAT3 pos, scale;
-        XMFLOAT4 quat;
+        Vect3f32 pos, scale;
+        Quaternion quat;
 
         d.read(pos.x);   d.read(pos.y);   d.read(pos.z);
         d.read(scale.x); d.read(scale.y); d.read(scale.z);
         d.read(quat.x);  d.read(quat.y);  d.read(quat.z); d.read(quat.w);
-        
+
         TransformComponent* t = world.GetComponent<TransformComponent>(localId);
         if (!t) return;
-        t->local.pos   = pos;
-        t->local.scale = scale;
-        t->local.quat  = quat;
-        t->local.UpdateRotationFromQuaternion();
-        t->local.UpdateMatrix();
+        t->local.SetPosition(pos);
+        t->local.SetScale(scale);
+        t->local.SetRotationQuaternion(quat);
         break;
     }
     case 0x02: // Health
@@ -221,10 +219,16 @@ void PacketHandler::HandleSnapshot(Serialization::Deserializeration& d, World& w
         {
             TransformComponent* t = world.GetComponent<TransformComponent>(localId);
 
-            d.read(t->local.matrix);
+            Mat4f32 mat;
+            d.read(mat);
 
-            t->local.UpdateRotationFromQuaternion();
-            t->local.UpdateMatrix();
+            Vect3f32 pos, scale;
+            Quaternion rot;
+            mat.FastDecompose(&pos, &scale, &rot);
+
+            t->local.SetPosition(pos);
+            t->local.SetScale(scale);
+            t->local.SetRotationQuaternion(rot);
         }
     }
 }

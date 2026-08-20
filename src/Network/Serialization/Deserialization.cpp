@@ -90,6 +90,17 @@ namespace Serialization
         }
         return true;
     }
+
+    bool Deserializeration::read(Mat4f32& data)
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            if (!read(data.rows[i].x) || !read(data.rows[i].y) ||
+                !read(data.rows[i].z) || !read(data.rows[i].w))
+                return false;
+        }
+        return true;
+    }
 }
 
 #endif
