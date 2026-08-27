@@ -97,8 +97,7 @@ private:
     AABB MakeBroadphaseAABB(RigidBody const& _body) const;
 
     // Broadphase : grille de hachage uniforme reconstruite à chaque Step().
-    // Les corps statiques (peu nombreux, AABB potentiellement énorme comme un
-    // sol) ne sont pas insérés dans la grille : ils sont testés directement
+    // Les corps statiques ne sont pas insérés dans la grille : ils sont testés directement
     // contre les corps dynamiques actifs (cf. m_activeDynamicIndices).
     static int64 PackCellCoord(int32 _x, int32 _y, int32 _z);
     void InsertIntoGrid(uint32 _bodyIndex, AABB const& _aabb);

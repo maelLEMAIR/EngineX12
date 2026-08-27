@@ -34,7 +34,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
     //TestNetwork::Run(argc, argv.data());
     //TestEngineManager::Run();
-    TestPhysicWorld::Run();
+    //TestPhysicWorld::Run();
+	DemoGeos::Run();
 
     EngineManager::GetInstance().Run();
     Console::DeleteConsol();

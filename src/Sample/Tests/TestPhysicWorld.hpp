@@ -47,7 +47,7 @@ class TestPhysicWorldScene : public Scene
 		cubeR.materialId = RessourceManager::GetMaterialId("Default");
 		TransformComponent* cubeT = &world.AddComponent<TransformComponent>(cubeEntity);
 		cubeT->local.SetScale(Vect3f32(1.0f, 1.0f, 1.0f));
-		cubeT->local.SetPosition(Vect3f32(10.0f, 5.0f, 10.0f)); // à l'écart du pavé de stress-test (x/z dans [-3.675, 3.675])
+		cubeT->local.SetPosition(Vect3f32(0.0f, 5.0f, 0.0f));
 		ColliderComponent* cubeC = &world.AddComponent<ColliderComponent>(cubeEntity);
 		cubeC->shape = ColliderShape::AABB;
         RigidBodyComponent* cubeRB = &world.AddComponent<RigidBodyComponent>(cubeEntity);
@@ -58,7 +58,7 @@ class TestPhysicWorldScene : public Scene
 		cubeR2.materialId = RessourceManager::GetMaterialId("Default");
 		TransformComponent* cubeT2 = &world.AddComponent<TransformComponent>(cubeEntity2);
 		cubeT2->local.SetScale(Vect3f32(1.0f, 1.0f, 1.0f));
-		cubeT2->local.SetPosition(Vect3f32(10.0f, 10.0f, 0.0f)); // à l'écart du pavé de stress-test
+		cubeT2->local.SetPosition(Vect3f32(0.0f, 10.0f, 0.0f)); // à l'écart du pavé de stress-test
 		ColliderComponent* cubeC2 = &world.AddComponent<ColliderComponent>(cubeEntity2);
 		cubeC2->shape = ColliderShape::AABB;
 		RigidBodyComponent* cubeRB2 = &world.AddComponent<RigidBodyComponent>(cubeEntity2);
@@ -106,10 +106,10 @@ class TestPhysicWorldScene : public Scene
 			cubeRB->SetLinearVelocity(Vect3f32(0.0f, 10.0f, 0.0f));
 
 		if (InputManager::IsKeyPressed(E))
-            cubeRB->ApplyForce(Vect3f32(100.0f, 0.0f, 0.0f));
+            cubeRB->ApplyForce(Vect3f32(10.0f, 0.0f, 0.0f));
 
 		if (InputManager::IsKeyPressed(A))
-			cubeRB->ApplyForce(Vect3f32(-100.0f, 0.0f, 0.0f));
+			cubeRB->ApplyForce(Vect3f32(-10.0f, 0.0f, 0.0f));
     }
 };
 
